@@ -1,0 +1,4 @@
+All code in this directory is 
+Copyright (c) Burhan Joukhadar
+and licensed under the Code Project Open License (CPOL).
+More info can be found at http://www.codeproject.com/info/cpol10.aspx
