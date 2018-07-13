@@ -45,39 +45,45 @@ public class PolySphere
  
     SubdivideAndDuals(); //Builds SphereTiles
     HeightSeed();
-    //SimplexHeights();
+    SimplexHeights();
     //SimplexHeights();
     //SimplexHeights();
     //SimplexHeights();
     //AvgHeight();
     //CorrectSunkenTiles();
     TectonicPlates(); //Populates plates and creates stress forces between them.
-    //Mortyfy();
-	Flatten();
+    //RandomPlateAttunement();
+	  //Flatten();
     CacheTris();
     CacheHexes(); //Converts to HexTiles for serialization
   }
+  
+  void RandomPlateAttunement()
+  {
+    TileType t;
+    TileType[] tta = new TileType[6] {
+				TileType.Luna,
+				TileType.Sol,
+				TileType.Water,
+				TileType.Air,
+				TileType.Earth,
+				TileType.Fire,
+			};
+    foreach(Plate p in plates)
+    {
+      t = tta[Random.Range(0,5)];
+      foreach(SphereTile st in p.tiles)
+      {
+        st.type = t;
+      }
+    }
+  }
+  
   void Flatten(){
 		foreach (SphereTile t in sTiles) {
 			t.type = TileType.Luna;
 			t.height = 1;
 		}		
-  }
-  void Mortyfy()
-  {
-    foreach (SphereTile t in sTiles)
-    {
-      t.type = TileType.Tan;
-      if (t.height > avgTileHeight + .2f)
-      {
-        t.type = TileType.Brown;
-      }
-      if (t.center.z < 0)
-      {
-        t.height = avgTileHeight;
-        t.type = TileType.Tan;
-      }
-    }
   }
   void HeightSeed()
   {
@@ -85,10 +91,6 @@ public class PolySphere
     {
       st.height = 1f;
     }
-  }
-  void PerlinHeights()
-  {
-    
   }
   void SimplexHeights()
   {
@@ -105,6 +107,7 @@ public class PolySphere
       st.height *= 1f + Mathf.Abs(simplex.coherentNoise(st.center.x, st.center.y, st.center.z, octaves, multiplier, amplitude, lacunarity, persistence));
       //+ .5f * Mathf.Abs(simplex.coherentNoise(s*st.center.x, s*st.center.y, s*st.center.z, octaves, multiplier, amplitude, lacunarity, persistence)); 
     }  
+    //Debug.Log(sTiles[1].height);
   }
 
   void AvgHeight()
@@ -374,13 +377,13 @@ public class PolySphere
             {
               //land
               //max height and adjust height with drift component in center direction, (a dot b)/|b|
-              st.type = TileType.Blue;
+              st.type = TileType.Gray;
               st.height += (pressureOnTile);
             }
             if (!p.oceanic && neighbor.oceanic)
             {
               //subducted, add a little more to the land at first then drop off
-              st.type = TileType.Blue;
+              st.type = TileType.Gray;
               st.height = avgTileHeight + .02f;
               p.subducted = true;
               st.height += (pressureOnTile);
@@ -392,13 +395,13 @@ public class PolySphere
               float rand = Random.Range(0, 1.0f);
               if (rand < oceanProb)
               {
-                st.type = TileType.Blue;
+                st.type = TileType.Water;
                 st.height = avgTileHeight;
               }
               else
               {
-                st.type = TileType.Blue;
-                st.height = avgTileHeight + .02f;
+                st.type = TileType.Water;
+                st.height = avgTileHeight;
               }
             }
             break; //one neighbor for each tile
@@ -435,20 +438,16 @@ public class PolySphere
           float shear = Vector3.Dot(pressure, perp) / perp.magnitude;
           //adjust drift for next set
           st.drift += (pressure);
-
+          
           if (p.oceanic)
           {
             //Debug.Log(p.oceanic);
-            stn.type = TileType.Tan;
+            stn.type = TileType.Water;
             stn.height = avgTileHeight;
           }
           if (!p.oceanic)
           {
-            stn.type = TileType.Brown;
-            if (st.distanceFromBoundary > Random.Range(3,6))
-            {
-              st.type = TileType.Brown;
-            }
+            stn.type = TileType.Gray;
             stn.height += (pressureOnTile);
           }
           break; //one neighbor per tile
@@ -863,43 +862,6 @@ public class PolySphere
     } 
   }
 
-  /*
-  Vector3 GetNearbyDefinedNeighborVector(List<Hexagon> hexes, int index, int direction)
-  {
-    if (index == -1)
-    {
-      Debug.LogError("null index");
-      return Vector3.zero;
-    }
-
-    int winner2 = -1, winner1 = -1;
-
-    for (int i=0;i<6;i++)
-    {
-      int neighbor = hexes[index].neighbors[i], neighNeighb = -1;
-
-      if (neighbor != -1)
-      {
-       //Debug.Log("tile defined: "+index+","+i+"   neighbor: "+neighbor);
-        neighNeighb = hexes[neighbor].neighbors[direction];
-        if (neighNeighb != -1)
-        {
-          winner1 = neighbor;
-          winner2 = neighNeighb;
-          break;
-        }
-      }
-    }
-
-    if (winner2 == -1 || winner1 == -1)
-    {
-      return Vector3.zero;
-    }
-    else
-      return hexes[winner1].center - hexes[winner2].center;
-  }
-  */
-
   int FindNeighbor(Vector3 center, Vector3 direction, List<SphereTile> potentialNeighbors)
   {
     float winningAngle = 190, angle=9999;
@@ -918,8 +880,6 @@ public class PolySphere
 
     return potentialNeighbors[winningNeighborIndex].index;
   }
-
- 
 
   public static int[] GetLeftHexagonInitialNeighborsAtSubdivion(int subdivisionLevel)
   {

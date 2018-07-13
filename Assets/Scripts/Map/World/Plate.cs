@@ -14,7 +14,6 @@ public class Plate {
   public Vector3 spin;
   private List<SphereTile> bound;
   public List<SphereTile> boundary;
-  public float oceanProb = 0.6f;
 
   public Plate(List<SphereTile> t, SphereTile ori, int ind)
   {
@@ -33,29 +32,13 @@ public class Plate {
     //Define random rotation about center axis (spin)
     spinAngle = Random.Range(0.1f, 0.24f);
 
-    /* used to be for finding origin, now passed
-    int i = 0;
-    foreach (SphereTile st in tiles)
-    {
-      if (st.plateOrigin == true)
-      {
-        origin = st;
-        i++;
-      }
-      if (i > 1)
-        Debug.Log("There are " + i + " origins in plate " + index);
-    }
-    */
-
     //set spin
     spin = origin.center * spinAngle;
 
-    //oceanic?
-    float rand = Random.Range(0, 1f);
-    if (rand <= oceanProb)
-    {
-      oceanic = true;
-    }
+    float rand = Random.Range(0,1.0f);
+    if(rand < 0.5f)
+    {oceanic = true;}
+
     //calculate movement
     //set drift for each tile
     foreach (SphereTile st in tiles)

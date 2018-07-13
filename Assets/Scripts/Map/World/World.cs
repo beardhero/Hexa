@@ -10,10 +10,9 @@ public enum AxisTilt { None, Slight, Moderate, Severe };      // Affects intensi
 [System.Serializable]
 public class World
 {
+  public int[] state;
   public const string cachePath = "currentWorld.save";
-
   public string name;
-
   public WorldSize size;
   public WorldType type;
   public Season season;
@@ -79,6 +78,31 @@ public class World
     tilt = at;
     origin = Vector3.zero;
   }
+
+  public void ReadState()
+  {
+    //state of tiletypes
+    state = new int[tiles.Count];
+    for (int i = 0; i < tiles.Count; i++)
+    {
+      state[i] = (int)tiles[i].type;
+    }
+  }
+
+  public void SetState(int[] st)
+  {
+    state = st;
+    foreach(HexTile ht in tiles)
+    {
+      ht.ChangeType((TileType)state[ht.index]);
+    }
+  }
+/*
+  public void Imbue(int[] glyph, HexTile origin)
+  {
+
+  }
+*/
 
   public void PrepForCache(float scale, int subdivisions)
   {

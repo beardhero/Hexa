@@ -13,10 +13,12 @@ public class HexTile
   string terrainType;
   public Hexagon hexagon;
   public TileType type;
+  public TileType typeToSet;
   public List<int> neighbors;
   public bool boundary;
   public bool[] rules;
   public bool flip;
+  public int antPasses = 0;
 	//Each tile has it's own rule set, rule changes turn these bools on and off accordingly
 	public bool os1, os2, os3, os4, os5, os6, ob1, ob2, ob3, ob4, ob5, ob6,
 	ws1, ws2, ws3, ws4, ws5, ws6, wb1, wb2, wb3, wb4, wb5, wb6,
@@ -277,16 +279,6 @@ public class HexTile
 	public void HexLifeShift(HexTile[] neighbs)
 	{
 		//count neighbors
-		/*
-		TileType[] types = new TileType[7] {
-			TileType.None,
-			TileType.Luna,
-			TileType.Water,
-			TileType.Fire,
-			TileType.Earth,
-			TileType.Sol,
-			TileType.Air
-		}; */
 		int[] ec = new int[7];
 		foreach (HexTile n in neighbs) {
 			if (n.type == TileType.Gray) {
@@ -319,7 +311,7 @@ public class HexTile
 		}
 		if ((os1 && ec [0] == 1) || (os2 && ec [0] == 2) || (os3 && ec [0] == 3) || (os4 && ec [0] == 4) || (os5 && ec [0] == 5) || (os6 && ec [0] == 6)) {
 			if (this.type == TileType.Gray) {
-				tset = this.type;
+		tset = this.type;
 				generation++;
 			}
 		}
@@ -385,11 +377,6 @@ public class HexTile
 		if ((ec [1] + ec [3] + ec [5]) == (ec [2] + ec [4] + ec [6])) {
 			tset = this.type;
 		}
-		//surrounded by null
-		if (ec[0] == 6) {
-			tset = TileType.Gray;
-		}
-
 		/*
 		if (this.type == TileType.Water && ecounts [2] > 0) {
 				

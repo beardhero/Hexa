@@ -51,7 +51,7 @@ public class Zone {
     //RandomWaterHeight(.2f, .4f);
 
     // 2nd pass: Spread ground
-    SpreadGround(4, TileType.Grass);
+    SpreadGround(4, TileType.Earth);
 
     //3rd: Refine ground
     RefineGround();
@@ -99,7 +99,7 @@ public class Zone {
     //RandomWaterHeight(.2f, .4f);
 
     // 2nd pass: Spread ground
-    SpreadGround(4, TileType.Grass);
+    SpreadGround(4, TileType.Earth);
 
     //3rd: Refine ground
     RefineGround();
@@ -312,7 +312,7 @@ public class Zone {
       
           //How about this: if your neighbor grass count is higher than neighbor empty count, become a grass  
           // If we have >5 neighbors, become wall
-          if (oldTiles[x,y].type == TileType.Grass || neighborGroundCount >= 5)
+          if (oldTiles[x,y].type == TileType.Earth || neighborGroundCount >= 5)
           {
               tiles[x,y].type = groundType;
           }
