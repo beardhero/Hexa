@@ -19,6 +19,7 @@ public class HexTile
   public bool[] rules;
   public bool flip;
   public int antPasses = 0;
+  public int state;
 	//Each tile has it's own rule set, rule changes turn these bools on and off accordingly
 	public bool os1, os2, os3, os4, os5, os6, ob1, ob2, ob3, ob4, ob5, ob6,
 	ws1, ws2, ws3, ws4, ws5, ws6, wb1, wb2, wb3, wb4, wb5, wb6,
@@ -250,6 +251,7 @@ public class HexTile
   public void ChangeType(TileType t)
   {
     type = t;
+	state = (int)t;
 	GameObject aW = GameObject.Find ("World");
 	GameObject gOWM = GameObject.Find ("WorldManager");
 	WorldManager wM = gOWM.GetComponent<WorldManager> ();

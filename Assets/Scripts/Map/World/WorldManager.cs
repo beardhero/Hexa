@@ -18,7 +18,8 @@ public class WorldManager : MonoBehaviour
   public static int uvWidth = 100;
   public static int uvHeight;
   public bool b;
-
+  public bool randomAnt;
+ 
  
   // === Private ===
   bool labelDirections;
@@ -64,10 +65,17 @@ public class WorldManager : MonoBehaviour
   public string sequence;
   public float antSpeed;
   public bool track;
+  float lerpTime = 1f;
+  float currentLerpTime;
+
   
 
   void Update()
   {
+    if(Input.GetKeyDown(KeyCode.T))
+    {
+      track = !track;
+    }
     //cyclical hex life
 		if(Input.GetKeyDown(KeyCode.Return))
 		{
@@ -106,22 +114,24 @@ public class WorldManager : MonoBehaviour
 			}
       /* */
       //RandomWorldState();
-      b = true;
-      StartCoroutine(LangstonsHex2(sequence));
-			
-      
+      b = !b;
+      if(b)
+      {
+        if(randomAnt){sequence = RandomAnt();}
+        StartCoroutine(LangstonsHex2(sequence));
+      }
 			fB = 0;
 		}	
     
 		fB++;
-		if (fB > frameDelay && b) 
+		if (b) 
     {
 		  //HLShift ();
       //CyclicalHexLife();
       //JoeLife();
       //TheDualityOfLife();
       //RandomWorldState();
-      //LangstonsHex2(sequence);
+      
 		  fB = 0;
     }
 	 
@@ -166,7 +176,7 @@ public class WorldManager : MonoBehaviour
 
   public IEnumerator LangstonsHex2(string seq)
   {
-     
+    Debug.Log(seq);
     int back, forward, right, left, port, starboard;
     int onT;
     char[] dna = seq.ToCharArray();
@@ -189,14 +199,31 @@ public class WorldManager : MonoBehaviour
     activeWorld.tiles[right].ChangeType(TileType.Water);
     activeWorld.tiles[starboard].ChangeType(TileType.Air);
     */
+    int toSet = 1;
     Vector3 o = activeWorld.origin;
     Vector3 ve = Camera.main.transform.position - o;
     float camMag = ve.magnitude *.4f;
+    Vector3 lVel = Vector3.zero;
+    float smoothTime = 1;
+    float dist;
+    Vector3 from;
+    Vector3 to;
     while(b)
     {
+      /* 
+      currentLerpTime += Time.deltaTime;
+      if (currentLerpTime > lerpTime) {
+          currentLerpTime = lerpTime;
+      }
+      float lerp = currentLerpTime / lerpTime;
+      */
       //Camera
       if(track){
-        Camera.main.transform.position = ((onTile.hexagon.center - activeWorld.origin)/(onTile.hexagon.center - activeWorld.origin).magnitude) * 4.24f;
+        from = Camera.main.transform.position;
+        to = ((onTile.hexagon.center - activeWorld.origin)/(onTile.hexagon.center - activeWorld.origin).magnitude) * 4.24f;
+        dist = (to - from).sqrMagnitude;
+        smoothTime = .161f;//+(0.95f/dist);
+        Camera.main.transform.position = Vector3.SmoothDamp(from, to, ref lVel, smoothTime);
         Camera.main.transform.LookAt(currentWorldTrans);
       }
       //Switch to next color
@@ -204,8 +231,12 @@ public class WorldManager : MonoBehaviour
       {
         Debug.Log(onTile.index);
       }
-      int toSet = (int)onTile.type + 1;
+      toSet = (int)onTile.type + 1;
       if(toSet > 7){toSet = 1;}
+      if(sequence.Length < 6 && toSet > sequence.Length)
+      {
+        toSet = 1;
+      }
       onTile.ChangeType((TileType)toSet);
       
       //Make next movement based on dna
@@ -324,45 +355,39 @@ public class WorldManager : MonoBehaviour
       }
       yield return null;
     }
+
+    //activeWorld.Clear();
+    foreach(HexTile ht in activeWorld.tiles)
+    {
+      ht.ChangeType(TileType.Gray);
+      ht.antPasses = 0;
+      ht.generation = 0;
+    }
     Debug.Log("Ant stopped");
     
     yield return null;
   }
  
-  /* 
-  public void LangstonsHex()
+  public string RandomAnt()
   {
-    HexTile t = activeWorld.tiles[onTile];
-    TileType onType = t.type;
-    TileType setTile = onType;
-    TileType nextTile = new TileType();
-    switch(onType)
+    int length = Random.Range(2,7);
+    string[] ant = new string[length];
+    string s = "";
+    for(int i = 0; i < length; i++)
     {
-      case TileType.Water: setTile = TileType.Fire; nextTile = TileType.Earth; break;
-      case TileType.Fire: setTile = TileType.Water; nextTile = TileType.Air; break;
-      case TileType.Earth: setTile = TileType.Air; nextTile = TileType.Dark; break;
-      case TileType.Air: setTile = TileType.Earth; nextTile = TileType.Light; break;
-      case TileType.Dark: setTile = TileType.Light; nextTile = TileType.Water; break;
-      case TileType.Light: setTile = TileType.Dark; nextTile = TileType.Fire; break;
-      default: break;
-    }
-    t.ChangeType(setTile);
-    int c = onTile;
-    foreach(int nei in t.neighbors)
-    {
-      if(activeWorld.tiles[nei].type == nextTile)
+      switch(Random.Range(0,6))
       {
-        onTile = nei;
-        continue;
+        case 0: ant[i] = "R"; break;
+        case 1: ant[i] = "L"; break;
+        case 2: ant[i] = "P"; break;
+        case 3: ant[i] = "S"; break;
+        case 4: ant[i] = "F"; break;
+        case 5: ant[i] = "B"; break;
       }
+      s += ant[i];
     }
-    if(onTile == c)
-    {
-      onTile = t.neighbors[UnityEngine.Random.Range(0,t.neighbors.Count)];
-    }
-    
+    return s;
   }
-  */
   public void TheDualityOfLife()
   {
     foreach(HexTile ht in activeWorld.tiles)
@@ -556,7 +581,7 @@ public class WorldManager : MonoBehaviour
     {
       g.transform.parent = currentWorldTrans;
     }
-
+    Debug.Log(activeWorld.tiles.Count);
     foreach(HexTile ht in activeWorld.tiles)
     {
       ht.ChangeType(TileType.Gray);

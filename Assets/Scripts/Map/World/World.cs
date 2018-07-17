@@ -97,6 +97,16 @@ public class World
       ht.ChangeType((TileType)state[ht.index]);
     }
   }
+
+  public void Clear()
+  {
+    foreach(HexTile ht in tiles)
+    {
+      if(ht.type != TileType.Gray){ht.ChangeType(TileType.Gray);}
+      ht.antPasses = 0;
+      ht.generation = 0;
+    }
+  }
 /*
   public void Imbue(int[] glyph, HexTile origin)
   {
