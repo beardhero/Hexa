@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum HexDirection{R, P, L, S, B, F};
+public enum HexDirection{R, P, L, S, B, F}; // right port left starboard back front
 
 [RequireComponent(typeof(WorldRenderer))]
 public class WorldManager : MonoBehaviour
@@ -11,16 +11,15 @@ public class WorldManager : MonoBehaviour
   public Transform textMeshPrefab;
   [HideInInspector] public World activeWorld;
   public TileSet regularTileSet;
-  public float maxMag = 10;
   public float worldScale = 1;
   public int worldSubdivisions = 1;
-  public static SimplexNoise simplex;
   public static int uvWidth = 100;
   public static int uvHeight;
   public bool b;
   public bool randomAnt;
- 
- 
+  public TileType element = TileType.Gray;
+  public byte[] seed;
+  
   // === Private ===
   bool labelDirections;
   //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistent galaxy.
@@ -67,8 +66,9 @@ public class WorldManager : MonoBehaviour
   public bool track;
   float lerpTime = 1f;
   float currentLerpTime;
-
-  
+  public GameObject newAnt;
+  public HexTile startingTile;
+  public HexTile forwardTile;
 
   void Update()
   {
@@ -118,7 +118,9 @@ public class WorldManager : MonoBehaviour
       if(b)
       {
         if(randomAnt){sequence = RandomAnt();}
-        StartCoroutine(LangstonsHex2(sequence));
+        GameObject ant = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        StartCoroutine(LangstonsHex0(sequence, ant));
+        //StartCoroutine(LangstonsHex2(sequence, newAnt, startingTile, forwardTile));
       }
 			fB = 0;
 		}	
@@ -134,7 +136,7 @@ public class WorldManager : MonoBehaviour
       
 		  fB = 0;
     }
-	 
+
     if(Input.GetKeyDown(KeyCode.M))
     {
       byte[] id = new byte[32];
@@ -146,7 +148,15 @@ public class WorldManager : MonoBehaviour
       
       MONTest(id);
     }
+
+    if(Input.GetKeyDown(KeyCode.N))
+    {
+      if(randomAnt){sequence = RandomAnt();}
+        GameObject ant = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        StartCoroutine(LangstonsHex0(sequence, ant));
+    }
     //Type Changer
+    /* 
     if (Input.GetKeyDown(KeyCode.Mouse1))
     {
 			r++;
@@ -157,6 +167,7 @@ public class WorldManager : MonoBehaviour
         StartCoroutine(TypeChange(hit));
       }
     }
+    */
   }
   
   void MONTest(byte[] id)
@@ -173,32 +184,98 @@ public class WorldManager : MonoBehaviour
     }
     activeWorld.SetState(st);
   }
+  public IEnumerator LangstonsHex0(string seq, GameObject ant)
+  {
+    Debug.Log("Select starting tile");
+    HexTile hitTile = new HexTile();
+    bool selecting = true;
+    while(selecting)
+    {
+      if(Input.GetKeyDown(KeyCode.Mouse0))
+      {
+        r++;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-  public IEnumerator LangstonsHex2(string seq)
+        //ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit, 100.0f))
+        {
+	        GameObject plateO = hit.transform.gameObject;
+	        Vector3 c = new Vector3 ();
+	        Vector3 h = hit.point;
+	        float test;
+	        float dist = 9999999;
+	        foreach (HexTile ht in activeWorld.tiles) 
+	        {
+			      c = ht.hexagon.center;
+			      test = (c - h).sqrMagnitude;
+			      if (test < dist) 
+            {
+			    	  dist = test;
+				      hitTile = ht;
+			      }
+	        }
+          selecting = false;
+        } 
+      }
+      yield return null;
+    }
+    Debug.Log(hitTile.index);
+    StartCoroutine(LangstonsHex1(seq, ant, hitTile));
+    yield return null;
+  }
+  public IEnumerator LangstonsHex1(string seq, GameObject ant, HexTile onTile)
+  {
+    Debug.Log("Select forward tile");
+    HexTile hitTile = new HexTile();
+    bool selecting = true;
+    while(selecting)
+    {
+      if(Input.GetKeyDown(KeyCode.Mouse0))
+      {
+        r++;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        //ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit, 100.0f))
+        {
+	        GameObject plateO = hit.transform.gameObject;
+	        Vector3 c = new Vector3 ();
+	        Vector3 h = hit.point;
+	        float test;
+	        float dist = 9999999;
+	        foreach (HexTile ht in activeWorld.tiles) 
+	        {
+            foreach(int i in onTile.neighbors)
+            {
+              if(ht.index == i)
+              {
+                 c = ht.hexagon.center;
+			          test = (c - h).sqrMagnitude;
+			          if (test < dist) 
+                {
+			    	      dist = test;
+				          hitTile = ht;
+			          }
+                selecting = false;
+              }
+            }
+	        }
+        } 
+      }
+      yield return null;
+    }
+    Debug.Log(hitTile.index);
+    StartCoroutine(LangstonsHex2(seq, ant, onTile, hitTile));
+    yield return null;
+  }
+  public IEnumerator LangstonsHex2(string seq, GameObject ant, HexTile onTile, HexTile forwardTile)
   {
     Debug.Log(seq);
     int back, forward, right, left, port, starboard;
-    int onT;
+    back = forward = right = left = port = starboard = 0;
     char[] dna = seq.ToCharArray();
-    HexTile tOut = new HexTile();
-    HexTile onTile = activeWorld.tiles[0];
+    //HexTile tOut = new HexTile();
     HexTile nextTile = new HexTile();
-
-    back = onTile.neighbors[0];
-    port = onTile.neighbors[1];
-    left = onTile.neighbors[2];
-    forward = onTile.neighbors[4];
-    right = onTile.neighbors[5];
-    starboard = onTile.neighbors[3];
-
-    /* 
-    activeWorld.tiles[back].ChangeType(TileType.Dark);
-    activeWorld.tiles[port].ChangeType(TileType.Fire);
-    activeWorld.tiles[left].ChangeType(TileType.Earth);
-    activeWorld.tiles[forward].ChangeType(TileType.Light);
-    activeWorld.tiles[right].ChangeType(TileType.Water);
-    activeWorld.tiles[starboard].ChangeType(TileType.Air);
-    */
     int toSet = 1;
     Vector3 o = activeWorld.origin;
     Vector3 ve = Camera.main.transform.position - o;
@@ -208,6 +285,85 @@ public class WorldManager : MonoBehaviour
     float dist;
     Vector3 from;
     Vector3 to;
+    Transform antTrans = ant.transform;
+    antTrans.position = onTile.hexagon.center;
+    
+    //Set up first tile
+    forward = forwardTile.index;
+    if(!onTile.hexagon.isPentagon)
+      {
+        Vector3 fVec = forwardTile.hexagon.center - onTile.hexagon.center; 
+        Vector3 rotationAxis = onTile.hexagon.center - activeWorld.origin;
+        for(int i = 0; i < 5; i++)
+        {
+          Vector3 nextVec = Quaternion.AngleAxis(60*(i+1), rotationAxis) * fVec;
+          float test = 99999;
+          int nextNei = 0;
+          foreach(int nei in onTile.neighbors)
+          {
+            Vector3 v = activeWorld.tiles[nei].hexagon.center - onTile.hexagon.center;
+            float tV = (v - nextVec).sqrMagnitude;
+            if(tV < test)
+            {
+              nextNei = nei;
+              test = tV;
+            }
+          }
+          switch(i)
+          {
+            case 0: right = activeWorld.tiles[nextNei].index; break;
+            case 1: starboard = activeWorld.tiles[nextNei].index; break;
+            case 2: back = activeWorld.tiles[nextNei].index; break;
+            case 3: port = activeWorld.tiles[nextNei].index; break;
+            case 4: left = activeWorld.tiles[nextNei].index; break;
+          }
+        }
+      }
+        else
+        {
+          back = forward;
+          Vector3 backVec = forwardTile.hexagon.center - onTile.hexagon.center; 
+          Vector3 rotationAxis = onTile.hexagon.center - activeWorld.origin;
+          for(int i = 0; i < 4; i++)
+          {
+            Vector3 nextVec = Quaternion.AngleAxis(72*(i+1), rotationAxis) * backVec;
+            float testF = 99999;
+            int nextNei = 0;
+            foreach(int nei in onTile.neighbors)
+            {
+              Vector3 v = activeWorld.tiles[nei].hexagon.center - onTile.hexagon.center;
+              float tV = (v - nextVec).sqrMagnitude;
+              if(tV < testF)
+              {
+                nextNei = nei;
+                testF = tV;
+              }
+            }
+            switch(i)
+            {
+                case 0: port = activeWorld.tiles[nextNei].index; break;
+                case 1: left = activeWorld.tiles[nextNei].index; break;
+                case 2: right = activeWorld.tiles[nextNei].index; break;
+                case 3: starboard = activeWorld.tiles[nextNei].index; break;
+            }
+          }
+        }
+    /*
+    port = onTile.neighbors[1];
+    left = onTile.neighbors[2];
+    forward = onTile.neighbors[4];
+    right = onTile.neighbors[5];
+    starboard = onTile.neighbors[3];
+    */
+    /* 
+    activeWorld.tiles[back].ChangeType(TileType.Dark);
+    activeWorld.tiles[port].ChangeType(TileType.Fire);
+    activeWorld.tiles[left].ChangeType(TileType.Earth);
+    activeWorld.tiles[forward].ChangeType(TileType.Light);
+    activeWorld.tiles[right].ChangeType(TileType.Water);
+    activeWorld.tiles[starboard].ChangeType(TileType.Air);
+    */
+    
     while(b)
     {
       /* 
@@ -220,9 +376,9 @@ public class WorldManager : MonoBehaviour
       //Camera
       if(track){
         from = Camera.main.transform.position;
-        to = ((onTile.hexagon.center - activeWorld.origin)/(onTile.hexagon.center - activeWorld.origin).magnitude) * 4.24f;
+        to = (onTile.hexagon.center - activeWorld.origin)*2.4f;
         dist = (to - from).sqrMagnitude;
-        smoothTime = .161f;//+(0.95f/dist);
+        smoothTime = .24f;//+(0.95f/dist);
         Camera.main.transform.position = Vector3.SmoothDamp(from, to, ref lVel, smoothTime);
         Camera.main.transform.LookAt(currentWorldTrans);
       }
@@ -257,7 +413,7 @@ public class WorldManager : MonoBehaviour
         default: Debug.Log("Invalid char" + dna[onTile.antPasses]); break;
       }
 
-      if(!onTile.hexagon.isPentagon)
+      if(!nextTile.hexagon.isPentagon)
       {
         back = onTile.index;
         Vector3 backVec = onTile.hexagon.center - nextTile.hexagon.center; 
@@ -270,11 +426,11 @@ public class WorldManager : MonoBehaviour
           foreach(int nei in nextTile.neighbors)
           {
             Vector3 v = activeWorld.tiles[nei].hexagon.center - nextTile.hexagon.center;
-            Vector3 tV = v - nextVec;
-            if(tV.sqrMagnitude < test)
+            float tV = (v - nextVec).sqrMagnitude;
+            if(tV < test)
             {
               nextNei = nei;
-              test = tV.sqrMagnitude;
+              test = tV;
             }
           }
           switch(i)
@@ -289,6 +445,7 @@ public class WorldManager : MonoBehaviour
       }
         else
         {
+          //Debug.Log("Registered pentagon: " + nextTile.index);
           back = onTile.index;
           forward = onTile.index;
           Vector3 backVec = onTile.hexagon.center - nextTile.hexagon.center; 
@@ -296,16 +453,16 @@ public class WorldManager : MonoBehaviour
           for(int i = 0; i < 4; i++)
           {
             Vector3 nextVec = Quaternion.AngleAxis(72*(i+1), rotationAxis) * backVec;
-            Vector3 testVec = new Vector3(9999,9999,9999);
+            float testF = 9999;
             int nextNei = 0;
             foreach(int nei in nextTile.neighbors)
             {
               Vector3 v = activeWorld.tiles[nei].hexagon.center - nextTile.hexagon.center;
-              Vector3 tV = v - nextVec;
-              if(tV.sqrMagnitude < testVec.sqrMagnitude)
+              float tV = (v - nextVec).sqrMagnitude;
+              if(tV < testF)
               {
                 nextNei = nei;
-                testVec = tV;
+                testF = tV;
               }
             }
             switch(i)
@@ -317,38 +474,11 @@ public class WorldManager : MonoBehaviour
             }
           }
         }
-      
+      antTrans.position = nextTile.hexagon.center;
+      antTrans.up = nextTile.hexagon.center - activeWorld.origin;
+      //Debug.DrawLine((onTile.hexagon.center-activeWorld.origin)*1.1f, (nextTile.hexagon.center-activeWorld.origin)*1.1f, Color.blue, 1000.0f, false);
       onTile = nextTile;
-      /* 
-      back = onTile.index;
-      int cNei = 0;
-      for(int i = 0; i < nextTile.neighbors.Count; i++)
-      {
-        if(nextTile.neighbors[i] == back)
-        {
-          cNei = i;
-        }
-      }
-      
-      if(!nextTile.hexagon.isPentagon)
-      {
-        port = nextTile.neighbors[];
-        left = nextTile.neighbors[];
-        forward = nextTile.neighbors[];
-        right = nextTile.neighbors[(];
-        starboard = nextTile.neighbors[];
-      }
-      else
-      {
-        port = nextTile.neighbors[(cNei+1)%6];
-        left = nextTile.neighbors[(cNei+2)%6];
-        forward = back;
-        right = nextTile.neighbors[(cNei+3)%6];
-        starboard = nextTile.neighbors[(cNei+4)%6];
-      }
-      
-      onTile = nextTile;
-      */
+   
       if(antSpeed > 0)
       {
         yield return new WaitForSeconds(antSpeed);
@@ -356,7 +486,6 @@ public class WorldManager : MonoBehaviour
       yield return null;
     }
 
-    //activeWorld.Clear();
     foreach(HexTile ht in activeWorld.tiles)
     {
       ht.ChangeType(TileType.Gray);
@@ -370,7 +499,7 @@ public class WorldManager : MonoBehaviour
  
   public string RandomAnt()
   {
-    int length = Random.Range(2,7);
+    int length = Random.Range(3,7);
     string[] ant = new string[length];
     string s = "";
     for(int i = 0; i < length; i++)
@@ -534,47 +663,32 @@ public class WorldManager : MonoBehaviour
     {
       if(ht.type != ht.typeToSet)
       {
-      ht.ChangeType(ht.typeToSet);
+        ht.ChangeType(ht.typeToSet);
       }
     }
   }
 
-  void OnDrawGizmos()
-  {
-    //Debug.Log("going here");
-    //DrawAxes();
-  }
-
   public World Initialize(bool loadWorld = false)
   {
-    
-    simplex = new SimplexNoise(GameManager.gameSeed);
-    /* 
-    octaves = Random.Range(4, 4);
-    multiplier = Random.Range(10, 10);
-    amplitude = Random.Range(0.6f, 1f);
-    lacunarity = Random.Range(0.7f, .9f);
-    dAmplitude = Random.Range(0.5f, .1f);
-    */
-
     if (loadWorld)
     {
+      //random world test
+      seed = new byte[32];
+      for(int i = 0; i < 32; i++)
+      {
+        seed[i] = (byte)UnityEngine.Random.Range(0,256);
+      }
       activeWorld = LoadWorld();
+      activeWorld.Populate(seed);
     }
     else
     {
       activeWorld = new World();
       activeWorld.PrepForCache(worldScale, worldSubdivisions);
     }
-    
-    //Seed the world heights
-    //SetHeights();
-    
+
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
-
-    //currentWorld = new World(WorldSize.Small, WorldType.Verdant, Season.Spring, AxisTilt.Slight);
-
     worldRenderer = GetComponent<WorldRenderer>();
     //changed this to run TriPlates instead of HexPlates
     foreach (GameObject g in worldRenderer.HexPlates(activeWorld, regularTileSet))
@@ -584,7 +698,7 @@ public class WorldManager : MonoBehaviour
     Debug.Log(activeWorld.tiles.Count);
     foreach(HexTile ht in activeWorld.tiles)
     {
-      ht.ChangeType(TileType.Gray);
+      ht.ChangeType(ht.type);
     }
 
     //layermask = 1 << 8;   // Layer 8 is set up as "Chunk" in the Tags & Layers manager
@@ -600,6 +714,7 @@ public class WorldManager : MonoBehaviour
   {
     return BinaryHandler.ReadData<World>(World.cachePath);
   }
+  
 
   void SetHeights() //@TODO we should be reading heights from hextile (based on the worldseed?)
   {
@@ -654,7 +769,7 @@ public class WorldManager : MonoBehaviour
       }
     }
   }
-  */
+  
   
   void DrawAxes()
   {
@@ -699,8 +814,8 @@ public class WorldManager : MonoBehaviour
       }
     }
     */
-  }
-
+ /* }
+   
   void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, float scale = .1f, bool suppressWarnings = true)
   {
     if (index == -1)

@@ -12,10 +12,12 @@ public class HexTile
   public float height;
   string terrainType;
   public Hexagon hexagon;
-  public TileType type;
+  public TileType type = TileType.Gray;
   public TileType typeToSet;
   public List<int> neighbors;
   public bool boundary;
+  public bool passable;
+  public bool oceanTile = false;
   public bool[] rules;
   public bool flip;
   public int antPasses = 0;

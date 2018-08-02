@@ -175,8 +175,7 @@ public class WorldRenderer : MonoBehaviour
 					triangles.Add(vertices.Count - 1);
 					triangles.Add(vertices.Count - 6);
 
-          //BYE BYE SIDES 
-          /* 
+           
 					// Side 1
 					triangles.Add(originIndex);
 					triangles.Add(vertices.Count - 1);
@@ -206,7 +205,7 @@ public class WorldRenderer : MonoBehaviour
 					triangles.Add(originIndex);
 					triangles.Add(vertices.Count - 6);
 					triangles.Add(vertices.Count - 1);
-          */
+          
 				}
 			}
     }

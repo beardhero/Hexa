@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
+using LibNoise.Unity.Generator;
 public enum WorldSize {None, Small, Medium, Large};
 public enum WorldType {None, Verdant, Frigid, Oceanic, Barren, Volcanic, Radiant, Gaseous};
 public enum Season {None, Spring, Summer, Fall, Winter};
@@ -17,12 +17,13 @@ public class World
   public WorldType type;
   public Season season;
   public AxisTilt tilt;
+  public TileType element;
 
-  public SerializableVector3 origin;
-  public int circumferenceInTiles;
-  public float circumference, radius;
-  public int numberOfPlates; //Set by polysphere on cache
-
+  [HideInInspector] public SerializableVector3 origin;
+  [HideInInspector] public int circumferenceInTiles;
+  [HideInInspector] public float circumference, radius;
+  [HideInInspector] public int numberOfPlates; //Set by polysphere on cache
+  [HideInInspector] public float seaLevel = 0;
   [HideInInspector] public List<HexTile> tiles;
   [HideInInspector] public List<TriTile> triTiles;
   [HideInInspector] public List<HexTile> pentagons;
@@ -78,7 +79,83 @@ public class World
     tilt = at;
     origin = Vector3.zero;
   }
-
+  public void Populate(byte[] seed)
+  {
+    Object[] airBiome = Resources.LoadAll("Air/");
+    Object[] earthBiome = Resources.LoadAll("Earth/");
+    Object[] waterBiome = Resources.LoadAll("Water/");
+    Object[] fireBiome = Resources.LoadAll("Fire/");
+    Object[] darkBiome = Resources.LoadAll("Dark/");
+    Object[] lightBiome = Resources.LoadAll("Light/");
+    Object[] misc = Resources.LoadAll("Misc/");
+    for(int i = 0; i < 32; i++)
+    {
+      if(i == 0)
+      {
+        seaLevel = tiles[0].hexagon.scale - 1;
+      }
+    // height seed.
+    int h = 0;
+    Perlin perlin = new Perlin();
+    perlin.Seed = seed[i];
+    perlin.Frequency = .0000024;
+    perlin.Lacunarity = 2.4;
+    perlin.Persistence = .24;
+    perlin.OctaveCount = 6;
+    float sc = 99.0f;
+    int tiers = 42; 
+    //float s = Random.Range(-99999, 99999);
+    foreach (HexTile ht in tiles)
+    {
+      double v1 = (tiers * perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc));
+      h = (int)v1;
+      ht.hexagon.scale += h;
+      int v = ((int)ht.type + h);
+      int t = v % 7;
+      t++;
+      ht.type = (TileType)t;
+    }
+    }
+    int water = 0; 
+    int fire = 0;
+    foreach(HexTile ht in tiles)
+    {
+      if(ht.type == TileType.Water){water++;}
+      if(ht.type == TileType.Fire){fire++;}
+    }
+    if(water >= fire)
+    {
+      element = TileType.Water;
+      foreach(HexTile ht in tiles)
+      {
+        if(ht.type == TileType.Water || ht.type == TileType.Fire)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
+        if(ht.type == TileType.Light){ht.type = TileType.Dark;};
+      }
+    }
+    else
+    {
+      element = TileType.Fire;
+      foreach(HexTile ht in tiles)
+      {
+        if(ht.type == TileType.Water || ht.type == TileType.Fire)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
+        if(ht.type == TileType.Dark){ht.type = TileType.Light;};
+      }
+    }
+    foreach(HexTile ht in tiles)
+    {
+      if(ht.hexagon.scale <= seaLevel)
+      {
+        ht.type = element;
+        ht.hexagon.scale = seaLevel;
+      }
+    }
+  }
   public void ReadState()
   {
     //state of tiletypes
@@ -133,35 +210,8 @@ public class World
     triTiles = new List<TriTile>(s.triTiles);
   }
   public void CacheHexes(PolySphere s)  // Executed by the cacher.  @CHANGE: Now directly converting spheretiles to hextiles
-  {
-    
-    tiles = new List<HexTile>(s.unitHexes);
+  { 
+    tiles = new List<HexTile>(s.hexTiles);
     neighborInit = false;
-    /*
-    foreach (Hexagon h in s.unitHexes)
-    {
-      tiles.Add(new HexTile(h));
-    }
-    /*
-    //plates = new List<List<HexTile>>();
-    for (int i = 0; i <= numberOfPlates; i++)
-    {
-      plates.Add(new List<HexTile>());
-    }
-    Debug.Log("# " + numberOfPlates);
-    foreach (HexTile ht in tiles)
-    {
-      Debug.Log(ht.plate);
-      plates[ht.plate].Add(ht);
-    }
-
-    Vector3 side1 = (Vector3)((tiles[0].hexagon.v1 + tiles[0].hexagon.v2) / 2.0f);
-    Vector3 side2 = (tiles[0].hexagon.v4 + tiles[0].hexagon.v5) / 2.0f;
-    Vector3 dividingSide = side1 - side2;
-    radius = (tiles[0].hexagon.v1-origin).magnitude;
-    circumference = Mathf.PI * radius * 2.0f;
-    circumferenceInTiles = (int)Mathf.Ceil(circumference / dividingSide.magnitude);
-    */
   }
-
 }

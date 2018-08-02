@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Mon{
+public class Mon : HEXToken{
 
     public UnityEngine.Random seed;
     public byte[] id;
@@ -14,7 +14,7 @@ public class Mon{
     public Ego ego;
     public int[] glyph;
 
-    public Mon(byte[] _id)// string _name, HEXTokenType _tokenType, Age _age, Vector3 _attunement, Vector3 _race, Vector3 _job, Vector3 _soma, Vector3 _ego)
+    public Mon(byte[] _id)  //string _name, HEXTokenType _tokenType, Age _age, Vector3 _attunement, Vector3 _race, Vector3 _job, Vector3 _soma, Vector3 _ego)
     {
         if(_id.Length == 32){id = _id;}
         else{Debug.Log("Invalid ID: Must be 32 bytes"); return;}
@@ -38,8 +38,8 @@ public class Mon{
             soma.Strength += Random.Range(0,24);
             soma.Defense += Random.Range(0,24);
             soma.Dexterity += Random.Range(0,24);
-            soma.Health += Random.Range(0,24);
-            soma.Mana += Random.Range(0,24);
+            soma.Health += Random.Range(0,9999);
+            soma.Mana += Random.Range(0,9999);
 
             ego.Movespeed += Random.Range(2,5);
             ego.Lifespan += Random.Range(24,100);
@@ -60,8 +60,8 @@ public class Mon{
         soma.Strength = soma.Strength % 24;
         soma.Defense = soma.Defense % 24;
         soma.Dexterity = soma.Dexterity % 24;
-        soma.Mana = soma.Mana % 24;
-        soma.Health = soma.Health % 24;
+        soma.Mana = soma.Mana % 9999;
+        soma.Health = soma.Health % 9999;
 
         ego.Movespeed = (ego.Movespeed % 4) + 1;
         ego.Lifespan = (ego.Lifespan % 99) + 24;

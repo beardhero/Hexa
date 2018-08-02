@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
 {
   // === Const & Inspector Cache ===
   public RelativityState beginningState = RelativityState.WorldMap;
-  public const string gameSeed = "whyisthishappening";
+  public const string gameSeed = "doesthisneedtobemorethaneightchars";
 
   // === Static Cache ===
   static RelativityState state;

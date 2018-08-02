@@ -27,7 +27,7 @@ public class SphereTile
   public List<Triangle> faceTris;
   public List<Triangle> sideTris;
   //Checking equality with the center vertex 
-  public Vector3 center{ get; set; }
+  public Vector3 center;
   public Vector3 origin;
   public Vector3 drift;
 
@@ -54,7 +54,7 @@ public class SphereTile
   }
 
   //Scaling property
-  private float _scale = 1;
+  private float _scale = 24;
   public float scale
   {
     get { return _scale; }
@@ -180,7 +180,7 @@ public class SphereTile
   {
     Vector3[] verts = new Vector3[1];
     verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
-    Hexagon hex = new Hexagon(index, faceTris[0].v1, verts, origin);
+    Hexagon hex = new Hexagon(index, center, verts, origin);
     //Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
     //convert neighbors to index list
     List<int> neig = new List<int>();
@@ -188,7 +188,7 @@ public class SphereTile
     {
       neig.Add(st.index);
     }
-    return new HexTile(hex, (int)this.plate, neig, boundary, height, type);
+    return new HexTile(hex, plate, neig, boundary, height, type);
   }
 }
 

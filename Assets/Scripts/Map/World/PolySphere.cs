@@ -13,39 +13,38 @@ public class PolySphere
   public int subdivisions;
   public static int maxPlates = 42; //max number of tectonic plates
   public static int minPlates = 24;
-  public float scale = 1;
+  public float scale = 24;
   public float avgTileHeight = 0;
   public float tileCount;
+  public TileType element;
 
   public List<Triangle> icosahedronTris;
   public List<List<Triangle>> subdividedTris;
   public List<Triangle> finalTris;    // The finest level of subdivided tris
-  public List<HexTile> unitHexes;
+  public List<HexTile> hexTiles;
+  public List<HexTile> orbitTiles;
   public List<TriTile> triTiles;
   public List<SphereTile> sTiles; //the tiles on this sphere
   public List<List<SphereTile>> tPlates;
   public List<Plate> plates;
   public int numberOfPlates;
-  public static SimplexNoise simplex;
-  public float amplitude, lacunarity, persistence;
-  public int octaves, multiplier;
-  public float oceanProb = 0.6f;
-
+  public float initialHeight;
+  public float oceanProb = 0.6f; //redacted
+  
   public PolySphere(){}
+
   public PolySphere(Vector3 o, float s, int d)
   {
     origin = o;
     scale = s;
     subdivisions = d;
-    //For seeding dual centers
-    simplex = new SimplexNoise(GameManager.gameSeed);
 
     icoCoords = new List<Vector3>();
     icosahedronTris = Icosahedron(scale);
  
     SubdivideAndDuals(); //Builds SphereTiles
-    HeightSeed();
-    SimplexHeights();
+    
+    
     //SimplexHeights();
     //SimplexHeights();
     //SimplexHeights();
@@ -53,11 +52,15 @@ public class PolySphere
     //CorrectSunkenTiles();
     TectonicPlates(); //Populates plates and creates stress forces between them.
     //RandomPlateAttunement();
-	  //Flatten();
-    CacheTris();
+	  
+    //CacheTris();
     CacheHexes(); //Converts to HexTiles for serialization
-  }
+    
+    //avgTileHeight = AvgHexHeight();
   
+    //HeightSeed();
+  }
+ 
   void RandomPlateAttunement()
   {
     TileType t;
@@ -80,36 +83,28 @@ public class PolySphere
   }
   
   void Flatten(){
-		foreach (SphereTile t in sTiles) {
-			t.type = TileType.Luna;
-			t.height = 1;
+		foreach (HexTile t in hexTiles) {
+			t.hexagon.scale = scale ;
 		}		
   }
   void HeightSeed()
   {
-    foreach (SphereTile st in sTiles)
+    foreach (HexTile ht in hexTiles)
     {
-      st.height = 1f;
+      ht.hexagon.scale = scale;
     }
+    Debug.Log(hexTiles[0].hexagon.scale);
   }
-  void SimplexHeights()
+
+  public float AvgHexHeight()
   {
-    //Simplex height seed.
-    octaves = Random.Range(6, 6);
-    multiplier = Random.Range(20, 30);
-    amplitude = Random.Range(.6f, 1.2f);
-    lacunarity = Random.Range(1.5f, 2.5f);
-    persistence = Random.Range(.5f, .6f);
-
-    //float s = Random.Range(-99999, 99999);
-    foreach (SphereTile st in sTiles)
+    foreach (HexTile ht in hexTiles)
     {
-      st.height *= 1f + Mathf.Abs(simplex.coherentNoise(st.center.x, st.center.y, st.center.z, octaves, multiplier, amplitude, lacunarity, persistence));
-      //+ .5f * Mathf.Abs(simplex.coherentNoise(s*st.center.x, s*st.center.y, s*st.center.z, octaves, multiplier, amplitude, lacunarity, persistence)); 
-    }  
-    //Debug.Log(sTiles[1].height);
+      avgTileHeight += ht.hexagon.scale;
+    }
+    avgTileHeight /= hexTiles.Count;
+    return avgTileHeight;
   }
-
   void AvgHeight()
   {
     foreach (SphereTile st in sTiles)
@@ -149,7 +144,8 @@ public class PolySphere
   
   void CacheHexes()
   {
-    unitHexes = new List<HexTile>();
+    hexTiles = new List<HexTile>();
+    
     foreach (SphereTile st in sTiles)
     {
       // Cache neighbors in list
@@ -159,14 +155,15 @@ public class PolySphere
           st.neighborDict.Add(t.index, t);
       }
     }
+    
     // === Cache unit hexagons ===
     foreach (SphereTile st in sTiles)
     {
-      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles, these are not units anymore
+      hexTiles.Add(st.ToHexTile()); //plate index passed along to hextiles, these are not units anymore
     }
     // === Assign neighbors to unit hexes ===
     List<Hexagon> toNei = new List<Hexagon>();
-    foreach (HexTile ht in unitHexes)
+    foreach (HexTile ht in hexTiles)
     {
       toNei.Add(ht.hexagon);
     }
@@ -310,7 +307,7 @@ public class PolySphere
     
     //Start at some random points across the sphere
     //each tile will have a chance to be assigned its own plate
-    int plateNum = Random.Range(minPlates, maxPlates);
+    int plateNum = (int)(1 + sTiles.Count/255f);//Random.Range(minPlates, maxPlates);
     for (int f = 0; f < plateNum; f++)
     {
       int i = 0; //tests if we made a plate origin
@@ -563,7 +560,7 @@ public class PolySphere
     List<Triangle> output = new List<Triangle>();
     List<Vector3> vertices = new List<Vector3>();
 
-    float goldRat = 1.618f; //golden ratio (Unity calculated it as 1.6)s
+    float goldRat = 1.618f;
 
     //Icosahedron coords
     Vector3 origin = Vector3.zero,

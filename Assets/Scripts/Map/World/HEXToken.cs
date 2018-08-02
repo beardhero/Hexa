@@ -9,7 +9,6 @@ public enum Attunement{Water, Fire, Earth, Air, Light, Dark};
 public enum Job{Control, Burst, Melee, Ranged, Tank, Healer};
 public struct Soma{public float Intelligence, Strength, Defense, Dexterity, Mana, Health;}
 public struct Ego{public int Level, Power, Size, Movespeed, Lifespan, Generation;};
-
 public enum Status{Soak, Burn, Root, Chill, Confuse, Blind};
 //public enum NameSyll{tra, arb, reb, syn, vin, rin, lin, tar, fil, gar, nar, var, gub, lub, veb, leb, vub, ad, ta, xo, va};
 
@@ -20,6 +19,8 @@ public class HEXToken
     public UnityEngine.Random seed;
     public byte[] id;
     
+    public HEXToken(){}
+
     public HEXToken(byte[] _id, HEXTokenType tt)
     {
         id = _id;

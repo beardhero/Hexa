@@ -25,7 +25,7 @@ public class Hexagon
 			v6 /= v6.magnitude;
 			v6 *= value;
 			center = (v1 + v2 + v3 + v4 + v5 + v6) / 6f;
-			_scale = center.magnitude; //scales may differ
+			_scale = center.magnitude;
 		}
   }
 
@@ -41,10 +41,11 @@ public class Hexagon
     v4 = verts[3];
     v5 = verts[4];
     v6 = verts[5];
+    _scale = center.magnitude;
     normal = ((Vector3)(center - origin)).normalized;
     foreach (Vector3 v in PolySphere.icoCoords)
     {
-      if (Vector3.Angle(center, v) < 0.1f)
+      if (center == v)
       {
         isPentagon = true;
       }
