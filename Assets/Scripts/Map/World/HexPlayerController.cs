@@ -11,14 +11,19 @@ public class HexPlayerController : MonoBehaviour {
 	WorldManager wM;
 	World aW;
 	Vector3 origin;
+	Animator animator;
 	float currentHeight = 0;
 	float testH = 0;
 	public float gravityScale = 4f;
-	public float runSpeed = 1;
+	public float walkSpeed = 1.33f;
+	public float runSpeed = 1.33f;
 	public float rotateSpeed = 2.4f;
 	public float jumpHeight = 24f;
 	public bool canJump;
+	public bool jumped;
 	public Camera cam;
+	//public float camZoomStep = .3f;
+	public float camRotateSpeed = 4.2f;
 	public float camSens = .5f;
 	// Use this for initialization
 	void Start () {
@@ -31,68 +36,74 @@ public class HexPlayerController : MonoBehaviour {
 		wM = GameObject.Find("WorldManager").GetComponent<WorldManager>();
 		aW = wM.activeWorld;
 		origin = new Vector3(aW.origin.x, aW.origin.y, aW.origin.z);
+		animator = player.GetComponent<Animator>();
 	}
 	void Update()
 	{
-		//trans.up = -gravityDir/gravityDir.magnitude;
+		if(Input.GetKeyDown(KeyCode.Space) && canJump)
+		{
+			jumped = true;
+		}
+		if(Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.W))
+		{
+			animator.Play("Idle");
+		}
 	}
 	// Update is called once per frame
 	void FixedUpdate () { 
 		gravityDir = (origin - trans.position).normalized;
 		trans.rotation = Quaternion.FromToRotation(trans.up, -gravityDir) * trans.rotation;
 		rigidbody.AddForce(gravityDir * gravityScale * rigidbody.mass, ForceMode.Acceleration);
-		
+
 		if(Input.GetKey(KeyCode.W))
 		{
-			rigidbody.velocity += trans.forward * runSpeed;
+			animator.enabled = true;
+			if(Input.GetKey(KeyCode.LeftShift))
+			{
+				rigidbody.velocity += trans.forward * runSpeed;
+				{animator.Play("Run");}
+			}
+			else{
+				rigidbody.velocity += trans.forward * walkSpeed;
+				{animator.Play("Walk");}
+			}
 		}
 		if(Input.GetKey(KeyCode.S))
 		{
-			rigidbody.velocity += -trans.forward * runSpeed;
+			animator.enabled = true;
+			if(Input.GetKey(KeyCode.LeftShift))
+			{
+				rigidbody.velocity += trans.forward * runSpeed;
+				{animator.Play("Run");}
+			}
+			else{
+				rigidbody.velocity += -trans.forward * walkSpeed;
+				{animator.Play("Walk");}
+			}
 		}
+		
 		if(Input.GetKey(KeyCode.D))
 		{
-			if(gravityDir.y > 0){trans.Rotate(gravityDir, rotateSpeed);}
-			else{trans.Rotate(gravityDir, -rotateSpeed);}
+			trans.RotateAround(trans.position, gravityDir, -rotateSpeed);
 		}
 		if(Input.GetKey(KeyCode.A))
 		{
-			if(gravityDir.y > 0){trans.Rotate(gravityDir, -rotateSpeed);}
-			else{trans.Rotate(gravityDir, rotateSpeed);}
+			trans.RotateAround(trans.position, gravityDir, rotateSpeed);
 		}
-		if(Input.GetKeyDown(KeyCode.Space) && canJump)
+		if(jumped)
 		{
 			rigidbody.AddForce(-gravityDir * jumpHeight);
 			canJump = false;
+			jumped = false;
+		}
+		if(Input.GetKey(KeyCode.Mouse1))
+		{
+			cam.transform.RotateAround(trans.position, gravityDir, -camRotateSpeed*Input.GetAxis("Mouse X"));
+			cam.transform.RotateAround(trans.position, cam.transform.right, -camRotateSpeed*Input.GetAxis("Mouse Y"));
 		}
 	}
-	
-	void OnCollisionEnter(Collision collision)
-    {
+	void OnCollisionStay(Collision collision)
+	{
 		canJump = true;
-
-		/* 
-		Vector3 setPoint = new Vector3();
-		if(currentHeight == 0)
-			{
-				currentHeight = collision.contacts[0].point.sqrMagnitude;
-			}
-        foreach (ContactPoint contact in collision.contacts)
-        {
-			float t = (contact.point - origin).sqrMagnitude;
-            if(t > testH && (Mathf.Abs(t - testH) < .1f || testH == 0)) //getting biggest, only checking ones that aren't too big
-			{
-				testH = t;
-				setPoint = contact.point;
-			}
-			if(testH > currentHeight)
-			{
-				rigidbody.MovePosition(trans.position, trans.position*(Mathf.Abs(testH - currentHeight)));
-				currentHeight = testH;
-			}
-        }
-		
-        //if (collision.relativeVelocity.magnitude > 2)  {audioSource.Play();}
-		*/
-    }
+	}
 }

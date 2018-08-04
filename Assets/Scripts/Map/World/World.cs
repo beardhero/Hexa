@@ -155,6 +155,23 @@ public class World
         ht.hexagon.scale = seaLevel;
       }
     }
+    //biome objects
+    foreach(HexTile ht in tiles)
+    {
+      switch(ht.type)
+      {
+        case TileType.Gray:
+        case TileType.Water:
+        case TileType.Fire:
+        case TileType.Earth:
+        case TileType.Air:
+        case TileType.Sol:
+        case TileType.Luna:
+        case TileType.Dark:
+        case TileType.Light:
+        default: break;
+      }
+    }
   }
   public void ReadState()
   {

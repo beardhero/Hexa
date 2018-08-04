@@ -588,7 +588,48 @@ public class WorldManager : MonoBehaviour
       ht.ChangeType(ht.typeToSet);
     }
   }
-
+  public void GenerationalJoeLife()
+  {
+    foreach(HexTile ht in activeWorld.tiles)
+    {
+      ht.typeToSet = TileType.Gray;
+      TileType nextTile = ht.type;
+      int s = 0;
+      foreach(int i in ht.neighbors)
+      {
+      switch (activeWorld.tiles[i].type)
+      {
+          case TileType.Fire:
+            s += 1;
+            break;
+          case TileType.Water:
+            s += 2;
+            break;
+          default: break;
+      }
+      }
+      if(ht.type == TileType.Gray && s == 4)
+      {
+        ht.typeToSet = TileType.Fire;
+      }
+      if(ht.type == TileType.Fire && s != 0 && s != 5 && s <= 6)
+      {
+        ht.typeToSet = TileType.Water;
+      }
+      if(ht.type == TileType.Water && (s == 1 || s == 2))
+      {
+        ht.typeToSet = TileType.Water;
+      }
+      if(ht.type == TileType.Water && s == 4)
+      {
+        ht.typeToSet = TileType.Fire;
+      }
+    }
+    foreach(HexTile ht in activeWorld.tiles)
+    {
+      ht.ChangeType(ht.typeToSet);
+    }
+  }
   public void JoeLife()
   {
      foreach(HexTile ht in activeWorld.tiles)
