@@ -14,9 +14,10 @@ public class HexTile
   public Hexagon hexagon;
   public TileType type = TileType.Gray;
   public TileType typeToSet;
+  public int objectToPlace = -1;
   public List<int> neighbors;
   public bool boundary;
-  public bool passable;
+  public bool passable = true;
   public bool oceanTile = false;
   public bool[] rules;
   public bool flip;

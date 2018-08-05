@@ -88,34 +88,40 @@ public class World
     Object[] darkBiome = Resources.LoadAll("Dark/");
     Object[] lightBiome = Resources.LoadAll("Light/");
     Object[] misc = Resources.LoadAll("Misc/");
+
+    Perlin perlin = new Perlin();
+    float sc = 99.0f;
+    float objSc = 999f;
+    int tiers = 42;
+    int h = 0;
+
     for(int i = 0; i < 32; i++)
     {
+      //heights
       if(i == 0)
       {
         seaLevel = tiles[0].hexagon.scale - 1;
       }
-    // height seed.
-    int h = 0;
-    Perlin perlin = new Perlin();
-    perlin.Seed = seed[i];
-    perlin.Frequency = .0000024;
-    perlin.Lacunarity = 2.4;
-    perlin.Persistence = .24;
-    perlin.OctaveCount = 6;
-    float sc = 99.0f;
-    int tiers = 42; 
-    //float s = Random.Range(-99999, 99999);
-    foreach (HexTile ht in tiles)
-    {
-      double v1 = (tiers * perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc));
-      h = (int)v1;
-      ht.hexagon.scale += h;
-      int v = ((int)ht.type + h);
-      int t = v % 7;
-      t++;
-      ht.type = (TileType)t;
+
+      perlin.Seed = seed[i];
+      perlin.Frequency = .0000024;
+      perlin.Lacunarity = 2.4;
+      perlin.Persistence = .24;
+      perlin.OctaveCount = 6;
+      
+      //float s = Random.Range(-99999, 99999);
+      foreach (HexTile ht in tiles)
+      {
+        double v1 = (tiers * perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc));
+        h = (int)v1;
+        ht.hexagon.scale += h;
+        int v = ((int)ht.type + h);
+        int t = v % 7;
+        t++;
+        ht.type = (TileType)t;
+      }
     }
-    }
+    //biomes and ocean
     int water = 0; 
     int fire = 0;
     foreach(HexTile ht in tiles)
@@ -147,30 +153,38 @@ public class World
         if(ht.type == TileType.Dark){ht.type = TileType.Light;};
       }
     }
+    //for placing objects
     foreach(HexTile ht in tiles)
     {
       if(ht.hexagon.scale <= seaLevel)
       {
         ht.type = element;
+        ht.oceanTile = true;
+        ht.passable = false;
         ht.hexagon.scale = seaLevel;
       }
     }
     //biome objects
     foreach(HexTile ht in tiles)
     {
-      switch(ht.type)
+      double v2 =  Mathf.Abs((float)perlin.GetValue(ht.hexagon.center.x * objSc, ht.hexagon.center.y * objSc, ht.hexagon.center.z * objSc));
+      double v3 = Random.Range(0.0f,1.0f);
+      if(v3 < v2)
       {
-        case TileType.Gray:
-        case TileType.Water:
-        case TileType.Fire:
-        case TileType.Earth:
-        case TileType.Air:
-        case TileType.Sol:
-        case TileType.Luna:
-        case TileType.Dark:
-        case TileType.Light:
-        default: break;
+        ht.passable = false;
+        switch(ht.type)
+        {
+          case TileType.Gray: ht.objectToPlace = Random.Range(0,misc.Length); break;
+          case TileType.Water: ht.objectToPlace = Random.Range(0,waterBiome.Length); break;
+          case TileType.Fire: ht.objectToPlace = Random.Range(0,fireBiome.Length); break;
+          case TileType.Earth: ht.objectToPlace = Random.Range(0,earthBiome.Length); break;
+          case TileType.Air: ht.objectToPlace = Random.Range(0,airBiome.Length); break;
+          case TileType.Dark: ht.objectToPlace = Random.Range(0,darkBiome.Length); break;
+          case TileType.Light: ht.objectToPlace = Random.Range(0,lightBiome.Length); break;
+          default: break;
+        }
       }
+      
     }
   }
   public void ReadState()

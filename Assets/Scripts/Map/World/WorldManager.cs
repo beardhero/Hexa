@@ -119,7 +119,7 @@ public class WorldManager : MonoBehaviour
       {
         if(randomAnt){sequence = RandomAnt();}
         GameObject ant = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        StartCoroutine(LangstonsHex0(sequence, ant));
+        //StartCoroutine(LangstonsHex0(sequence, ant));
         //StartCoroutine(LangstonsHex2(sequence, newAnt, startingTile, forwardTile));
       }
 			fB = 0;
@@ -130,7 +130,7 @@ public class WorldManager : MonoBehaviour
     {
 		  //HLShift ();
       //CyclicalHexLife();
-      //JoeLife();
+      JoeLife();
       //TheDualityOfLife();
       //RandomWorldState();
       
@@ -156,8 +156,8 @@ public class WorldManager : MonoBehaviour
         StartCoroutine(LangstonsHex0(sequence, ant));
     }
     //Type Changer
-    /* 
-    if (Input.GetKeyDown(KeyCode.Mouse1))
+    
+    if (Input.GetKeyDown(KeyCode.Mouse0))
     {
 			r++;
       Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -167,7 +167,6 @@ public class WorldManager : MonoBehaviour
         StartCoroutine(TypeChange(hit));
       }
     }
-    */
   }
   
   void MONTest(byte[] id)
@@ -634,35 +633,35 @@ public class WorldManager : MonoBehaviour
   {
      foreach(HexTile ht in activeWorld.tiles)
     {
-      ht.typeToSet = TileType.Gray;
+      ht.typeToSet = TileType.Light;
       TileType nextTile = ht.type;
       int s = 0;
       foreach(int i in ht.neighbors)
       {
-      switch (activeWorld.tiles[i].type)
-      {
-          case TileType.Fire:
-            s += 1;
-            break;
-          case TileType.Water:
-            s += 2;
-            break;
-          default: break;
+        switch (activeWorld.tiles[i].type)
+        {
+            case TileType.Fire:
+              s += 1;
+              break;
+           case TileType.Air:
+              s += 2;
+              break;
+            default: break;
+        }
       }
-      }
-      if(ht.type == TileType.Gray && s == 4)
+      if((ht.type == TileType.Light || ht.type == TileType.Gray) && s == 4)
       {
         ht.typeToSet = TileType.Fire;
       }
       if(ht.type == TileType.Fire && s != 0 && s != 5 && s <= 6)
       {
-        ht.typeToSet = TileType.Water;
+        ht.typeToSet = TileType.Air;
       }
-      if(ht.type == TileType.Water && (s == 1 || s == 2))
+      if(ht.type == TileType.Air && (s == 1 || s == 2))
       {
-        ht.typeToSet = TileType.Water;
+        ht.typeToSet = TileType.Air;
       }
-      if(ht.type == TileType.Water && s == 4)
+      if(ht.type == TileType.Air && s == 4)
       {
         ht.typeToSet = TileType.Fire;
       }
@@ -720,7 +719,58 @@ public class WorldManager : MonoBehaviour
         seed[i] = (byte)UnityEngine.Random.Range(0,256);
       }
       activeWorld = LoadWorld();
+      
       activeWorld.Populate(seed);
+      //place objects in biomes
+      Object[] airBiome = Resources.LoadAll("Air/");
+      Object[] earthBiome = Resources.LoadAll("Earth/");
+      Object[] waterBiome = Resources.LoadAll("Water/");
+      Object[] fireBiome = Resources.LoadAll("Fire/");
+      Object[] darkBiome = Resources.LoadAll("Dark/");
+      Object[] lightBiome = Resources.LoadAll("Light/");
+      Object[] misc = Resources.LoadAll("Misc/");
+
+      foreach(HexTile ht in activeWorld.tiles)
+      {
+        if(ht.objectToPlace != -1)
+        {
+          Object g = new Object();
+          Vector3 v =  ht.hexagon.center - activeWorld.origin;
+          
+        switch(ht.type)
+        {
+          case TileType.Gray:
+            g = misc[ht.objectToPlace]; 
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Water: 
+            g = waterBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Fire: 
+            g = fireBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Earth: 
+            g = earthBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Air: 
+            g = airBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Dark: 
+            g = darkBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          case TileType.Light: 
+            g = lightBiome[ht.objectToPlace];
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
+          default: break;
+        }
+      }
+    }
     }
     else
     {
@@ -749,6 +799,27 @@ public class WorldManager : MonoBehaviour
     //DrawHexIndices();
 
     return activeWorld;
+  }
+
+  public IEnumerator TypeChange(RaycastHit hit)
+  {
+    HexTile hitTile = new HexTile();
+	  GameObject plateO = hit.transform.gameObject;
+	  Vector3 c = new Vector3 ();
+	  Vector3 h = hit.point;
+	  float test;
+	  float dist = 9999999;
+	  foreach (HexTile ht in activeWorld.tiles) 
+	  {
+			c = ht.hexagon.center;
+			test = (c - h).sqrMagnitude;
+			if (test < dist) {
+				dist = test;
+				hitTile = ht;
+		}
+	}
+	  hitTile.ChangeType(switchToType);
+    yield return null;
   }
 
   World LoadWorld()
@@ -902,27 +973,6 @@ public class WorldManager : MonoBehaviour
       x.text = ht.index.ToString();
       t.parent = currentWorldTrans;
     }
-  }
-
-  public IEnumerator TypeChange(RaycastHit hit)
-  {
-    HexTile hitTile = new HexTile();
-	GameObject plateO = hit.transform.gameObject;
-	Vector3 c = new Vector3 ();
-	Vector3 h = hit.point;
-	float test;
-	float dist = 9999999;
-	foreach (HexTile ht in activeWorld.tiles) 
-	{
-			c = ht.hexagon.center;
-			test = (c - h).sqrMagnitude;
-			if (test < dist) {
-				test = dist;
-				hitTile = ht;
-			}
-	}
-	hitTile.ChangeType(switchToType);
-    yield return null;
   }
   
   public void HLShift ()

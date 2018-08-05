@@ -24,8 +24,6 @@ public class HEXToken
     public HEXToken(byte[] _id, HEXTokenType tt)
     {
         id = _id;
-        //tokenType = tt;
-
     }     
 }
 

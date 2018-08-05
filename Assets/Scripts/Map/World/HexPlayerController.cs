@@ -6,6 +6,7 @@ public class HexPlayerController : MonoBehaviour {
 	Rigidbody rigidbody;
 	Transform trans;
 	GameObject player;
+	Transform head;
 	Vector3 gravityDir;
 	Vector3 moveDir;
 	WorldManager wM;
@@ -22,6 +23,9 @@ public class HexPlayerController : MonoBehaviour {
 	public bool canJump;
 	public bool jumped;
 	public Camera cam;
+	public float zoomMax = 10.0f;
+	public float zoomMin = 0.5f;
+	public float camZoomStep = .1f;
 	//public float camZoomStep = .3f;
 	public float camRotateSpeed = 4.2f;
 	public float camSens = .5f;
@@ -29,6 +33,7 @@ public class HexPlayerController : MonoBehaviour {
 	void Start () {
 		player = this.gameObject;
 		trans = player.transform;
+		//head = GameObject.Find("Head").transform;
 		rigidbody = GetComponent<Rigidbody>();
 		rigidbody.useGravity = false;
 		rigidbody.freezeRotation = true;
@@ -48,6 +53,10 @@ public class HexPlayerController : MonoBehaviour {
 		{
 			animator.Play("Idle");
 		}
+		float f = Input.GetAxis("Mouse ScrollWheel");
+		Vector3 v = cam.transform.position - trans.position;
+		if(v.magnitude <= zoomMax && f < 0){cam.transform.position -= f*v*camZoomStep;}
+		if(v.magnitude >= zoomMin && f > 0){cam.transform.position -= f*v*camZoomStep;}
 	}
 	// Update is called once per frame
 	void FixedUpdate () { 
@@ -73,7 +82,7 @@ public class HexPlayerController : MonoBehaviour {
 			animator.enabled = true;
 			if(Input.GetKey(KeyCode.LeftShift))
 			{
-				rigidbody.velocity += trans.forward * runSpeed;
+				rigidbody.velocity += -trans.forward * runSpeed;
 				{animator.Play("Run");}
 			}
 			else{
@@ -99,9 +108,9 @@ public class HexPlayerController : MonoBehaviour {
 		if(Input.GetKey(KeyCode.Mouse1))
 		{
 			cam.transform.RotateAround(trans.position, gravityDir, -camRotateSpeed*Input.GetAxis("Mouse X"));
-			cam.transform.RotateAround(trans.position, cam.transform.right, -camRotateSpeed*Input.GetAxis("Mouse Y"));
+			cam.transform.RotateAround(cam.transform.position, cam.transform.right, -camRotateSpeed*Input.GetAxis("Mouse Y"));
 		}
-	}
+	}                                
 	void OnCollisionStay(Collision collision)
 	{
 		canJump = true;

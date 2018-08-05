@@ -1,10 +1,11 @@
 using UnityEngine;
 
-public class Mon : HEXToken{
+public class Mon {
 
     public UnityEngine.Random seed;
     public byte[] id;
     public string name;
+    
     public HEXTokenType tokenType;
     public Attunement attunement;
     public Age age;
@@ -13,6 +14,7 @@ public class Mon : HEXToken{
     public Soma soma;
     public Ego ego;
     public int[] glyph;
+    
 
     public Mon(byte[] _id)  //string _name, HEXTokenType _tokenType, Age _age, Vector3 _attunement, Vector3 _race, Vector3 _job, Vector3 _soma, Vector3 _ego)
     {
