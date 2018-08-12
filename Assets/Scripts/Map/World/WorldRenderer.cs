@@ -14,7 +14,6 @@ public class WorldRenderer : MonoBehaviour
   bool controlx;
   bool controly;
   bool controlz;
-
   public static Vector2 uv0,uv1,uv2,uv3,uv4,uv5,uv6;
   public static float uvTileWidth;
   public static float uvTileHeight;
@@ -60,11 +59,11 @@ public class WorldRenderer : MonoBehaviour
     if (hexagonal) //Hexagonal uvs
     {
       //Copypasta from worldrenderer
-      float texHeight = tileSet.texture.height;
-      float texWidth = tileSet.texture.width;
+      float texHeight = 4096f;//tileSet.texture.height;
+      float texWidth = 4096f;//tileSet.texture.width;
       float root3 = Mathf.Sqrt(3);
-			uvTileWidth = 1.0f / 7.0f; //tileSet.tileWidth / texWidth;
-			uvTileHeight = 1.0f / 7.0f; //tileSet.tileHeight / texHeight;
+			uvTileWidth = 1.0f / 21.0f; //tileSet.tileWidth / texWidth;
+			uvTileHeight = 1.0f / 21.0f; //tileSet.tileHeight / texHeight;
       //float side = uvTileWidth / 2.0f;
      // float radius = Mathf.Sqrt((3.0f * side * side) / 4.0f);
 	  /*
@@ -77,12 +76,12 @@ public class WorldRenderer : MonoBehaviour
               uv6 = new Vector2(side - radius, side + side / 2.0f);
 		*/
 			uv0 = new Vector2 (uvTileWidth/2.0f, uvTileHeight / 2.0f);
-			uv1 = new Vector2 (6/texWidth, 74/texHeight);
-			uv2 = new Vector2 (40/texWidth, 16/texHeight);
-			uv3 = new Vector2 (106/texWidth, 16/texHeight);
-			uv4 = new Vector2 (140/texWidth, 74/texHeight);
-			uv5 = new Vector2 (106/texWidth, 132/texHeight);
-			uv6 = new Vector2 (40/texWidth, 132/texHeight);
+			uv1 = new Vector2 (10/texWidth, 98/texHeight);
+			uv2 = new Vector2 (54/texWidth, 22/texHeight);
+			uv3 = new Vector2 (141/texWidth, 22/texHeight);
+			uv4 = new Vector2 (185/texWidth, 98/texHeight);
+			uv5 = new Vector2 (141/texWidth, 173/texHeight);
+			uv6 = new Vector2 (54/texWidth, 173/texHeight);
 
 			//Debug.Log (uv0.x + " " + uv0.y);
 			//Debug.Log(uv1.x + " " + uv1.y);
@@ -97,9 +96,9 @@ public class WorldRenderer : MonoBehaviour
 				{
 					IntCoord uvCoord = tileSet.GetUVForType(ht.type);
 					//Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
-					Vector2 uvOffset = new Vector2(uvCoord.x * uvTileWidth, uvCoord.y * uvTileHeight);
+					Vector2 uvOffset = new Vector2(uvCoord.x * uvTileWidth, ht.generation*uvTileHeight);//uvCoord.y * uvTileHeight);
 
-					// Origin point, every tile unfortunately repeats origin for uv purposes
+					// Origin point, every tile unfortunately repeats origin (@TODO and one vertex) for uv purposes
 					int originIndex = vertices.Count;
 					vertices.Add(origin);
 					uvs.Add(uv0 + uvOffset);
@@ -170,10 +169,9 @@ public class WorldRenderer : MonoBehaviour
 					triangles.Add(vertices.Count - 1);
 
 					// T6
-
 					triangles.Add(centerIndex);
-					triangles.Add(vertices.Count - 1);
-					triangles.Add(vertices.Count - 6);
+					triangles.Add(vertices.Count - 1);   //1
+					triangles.Add(vertices.Count - 6);   //6
 
            
 					// Side 1
@@ -200,8 +198,8 @@ public class WorldRenderer : MonoBehaviour
 					triangles.Add(originIndex);
 					triangles.Add(vertices.Count - 5);
 					triangles.Add(vertices.Count - 6);
-
-					// Side 6
+          
+					// Side 6 extra vertex
 					triangles.Add(originIndex);
 					triangles.Add(vertices.Count - 6);
 					triangles.Add(vertices.Count - 1);

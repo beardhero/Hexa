@@ -262,7 +262,7 @@ public class HexTile
 	MeshCollider[] meshC = aW.transform.GetComponentsInChildren<MeshCollider>();
 	Mesh mesh = meshC [plate].sharedMesh;
 	IntCoord newCoord = wM.regularTileSet.GetUVForType(t);
-		newCoord.y += generation;
+		newCoord.y = generation;
 	Vector2 newOffset = new Vector2((newCoord.x * WorldRenderer.uvTileWidth), (newCoord.y * WorldRenderer.uvTileHeight));
 	
 	Vector2[] uvs = mesh.uv;
@@ -279,6 +279,24 @@ public class HexTile
 	public void ChangeRule(bool[] bs)
 	{
 		rules = bs;
+	}
+
+	public TileType[] GetOpposingElements()
+	{
+		TileType[] opp = new TileType[4];
+		switch(type)
+		{
+			case TileType.Water: opp[0] = TileType.Fire; opp[1] = TileType.Air; opp[2] = TileType.Light; opp[3] = TileType.Sol; break;
+			case TileType.Earth: opp[0] = TileType.Air; opp[1] = TileType.Fire; opp[2] = TileType.Light; opp[3] = TileType.Sol; break;
+			case TileType.Dark: opp[0] = TileType.Light; opp[1] = TileType.Air; opp[2] = TileType.Fire; opp[3] = TileType.Sol; break; 
+			case TileType.Luna:  opp[0] = TileType.Sol; opp[1] = TileType.Air; opp[2] = TileType.Light; opp[3] = TileType.Fire; break;
+			case TileType.Fire: opp[0] = TileType.Water; opp[1] = TileType.Earth; opp[2] = TileType.Dark; opp[3] = TileType.Luna; break;
+			case TileType.Air: opp[0] = TileType.Earth; opp[1] = TileType.Water; opp[2] = TileType.Dark; opp[3] = TileType.Luna; break;
+			case TileType.Light: opp[0] = TileType.Dark; opp[1] = TileType.Earth; opp[2] = TileType.Water; opp[3] = TileType.Luna; break;
+			case TileType.Sol: opp[0] = TileType.Luna; opp[1] = TileType.Earth; opp[2] = TileType.Dark; opp[3] = TileType.Water; break;
+			default: break;
+		}
+		return opp;
 	}
 
 	public void HexLifeShift(HexTile[] neighbs)

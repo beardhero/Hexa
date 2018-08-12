@@ -91,11 +91,12 @@ public class World
 
     Perlin perlin = new Perlin();
     float sc = 99.0f;
-    float objSc = 999f;
-    int tiers = 42;
+    float objSc = 240f;
+    float genSc = 99999f;
+    double tiers = 42;
     int h = 0;
 
-    for(int i = 0; i < 32; i++)
+    for(int i = 0; i < seed.Length; i++)
     {
       //heights
       if(i == 0)
@@ -112,16 +113,33 @@ public class World
       //float s = Random.Range(-99999, 99999);
       foreach (HexTile ht in tiles)
       {
-        double v1 = (tiers * perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc));
+        double perlinVal = perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc);
+        double v1 = tiers * perlinVal;
         h = (int)v1;
+        //Debug.Log(v1);
         ht.hexagon.scale += h;
         int v = ((int)ht.type + h);
         int t = v % 7;
         t++;
         ht.type = (TileType)t;
+        
+        double g = perlin.GetValue(ht.hexagon.center.x * genSc, ht.hexagon.center.y * genSc, ht.hexagon.center.z * genSc);
+        int gen = (int)g;
+        ht.generation += gen;
+        if(ht.generation > 4)
+        {
+          ht.generation = 4;
+        }
+        if(ht.generation < 2)
+        {
+          ht.generation = 2;
+        }
+        
+        //ht.generation = Random.Range(2,5); //@TODO
       }
     }
     //biomes and ocean
+  
     int water = 0; 
     int fire = 0;
     foreach(HexTile ht in tiles)

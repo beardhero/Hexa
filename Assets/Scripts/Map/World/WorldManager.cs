@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public enum HexDirection{R, P, L, S, B, F}; // right port left starboard back front
 
@@ -22,7 +23,7 @@ public class WorldManager : MonoBehaviour
   
   // === Private ===
   bool labelDirections;
-  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistent galaxy.
+  
   private int octaves, multiplier;
   private float amplitude, lacunarity, dAmplitude;
 
@@ -66,12 +67,36 @@ public class WorldManager : MonoBehaviour
   public bool track;
   float lerpTime = 1f;
   float currentLerpTime;
+  public float hDiffTolerance = .1f;
+  public int maxElementals = 12;
+  public int eleSpawnMin = 60;
+  public int eleSpawnMax = 360;
+  public bool activeElementals = true;
+  public Object[] elementals;
+  public Object[] AirElementals;
+  public Object[] EarthElementals;
+  public Object[] WaterElementals;
+  public Object[] FireElementals;
+  public Object[] LightElementals;
+  public Object[] DarkElementals;
+  public List<GameObject> livingElementals;
+  public List<IEnumerator> eleCoroutines;
   public GameObject newAnt;
   public HexTile startingTile;
   public HexTile forwardTile;
 
   void Update()
   {
+    if(Input.GetKeyDown(KeyCode.G))
+    {
+      int[] s = CalculateGenerationalJoeLife(activeWorld.tiles, 1);
+      for(int y = 0; y < activeWorld.tiles.Count; y++)
+      {
+        HexTile t = activeWorld.tiles[y];
+        t.generation = s[y];
+        t.ChangeType(t.type);
+      }
+    }
     if(Input.GetKeyDown(KeyCode.T))
     {
       track = !track;
@@ -119,7 +144,7 @@ public class WorldManager : MonoBehaviour
       {
         if(randomAnt){sequence = RandomAnt();}
         GameObject ant = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        //StartCoroutine(LangstonsHex0(sequence, ant));
+        StartCoroutine(LangstonsHex0(sequence, ant));
         //StartCoroutine(LangstonsHex2(sequence, newAnt, startingTile, forwardTile));
       }
 			fB = 0;
@@ -130,7 +155,7 @@ public class WorldManager : MonoBehaviour
     {
 		  //HLShift ();
       //CyclicalHexLife();
-      JoeLife();
+      //JoeLife();
       //TheDualityOfLife();
       //RandomWorldState();
       
@@ -284,8 +309,9 @@ public class WorldManager : MonoBehaviour
     float dist;
     Vector3 from;
     Vector3 to;
+    //Instantiate(ant, onTile.hexagon.center, Quaternion.identity);
     Transform antTrans = ant.transform;
-    antTrans.position = onTile.hexagon.center;
+    antTrans.position = onTile.hexagon.center; //@TODO: figure out correct scaling
     
     //Set up first tile
     forward = forwardTile.index;
@@ -363,7 +389,7 @@ public class WorldManager : MonoBehaviour
     activeWorld.tiles[starboard].ChangeType(TileType.Air);
     */
     
-    while(b)
+    while(true)
     {
       /* 
       currentLerpTime += Time.deltaTime;
@@ -372,7 +398,7 @@ public class WorldManager : MonoBehaviour
       }
       float lerp = currentLerpTime / lerpTime;
       */
-      //Camera
+      /*Camera
       if(track){
         from = Camera.main.transform.position;
         to = (onTile.hexagon.center - activeWorld.origin)*2.4f;
@@ -380,7 +406,7 @@ public class WorldManager : MonoBehaviour
         smoothTime = .24f;//+(0.95f/dist);
         Camera.main.transform.position = Vector3.SmoothDamp(from, to, ref lVel, smoothTime);
         Camera.main.transform.LookAt(currentWorldTrans);
-      }
+      }*/
       //Switch to next color
       if(onTile.type == TileType.None)
       {
@@ -473,8 +499,8 @@ public class WorldManager : MonoBehaviour
             }
           }
         }
-      antTrans.position = nextTile.hexagon.center;
-      antTrans.up = nextTile.hexagon.center - activeWorld.origin;
+      antTrans.position = nextTile.hexagon.center * 1.03f;
+      //antTrans.up = nextTile.hexagon.center - activeWorld.origin;
       //Debug.DrawLine((onTile.hexagon.center-activeWorld.origin)*1.1f, (nextTile.hexagon.center-activeWorld.origin)*1.1f, Color.blue, 1000.0f, false);
       onTile = nextTile;
    
@@ -484,7 +510,6 @@ public class WorldManager : MonoBehaviour
       }
       yield return null;
     }
-
     foreach(HexTile ht in activeWorld.tiles)
     {
       ht.ChangeType(TileType.Gray);
@@ -495,7 +520,250 @@ public class WorldManager : MonoBehaviour
     
     yield return null;
   }
- 
+  public IEnumerator LangstonsElementals(string seq, GameObject antGO, HexTile onTile, HexTile forwardTile)
+  {
+    Debug.Log(seq);
+    int back, forward, right, left, port, starboard;
+    back = forward = right = left = port = starboard = 0;
+    TileType ele = onTile.type;
+    Debug.Log((int)ele);
+    char[] dna = seq.ToCharArray();
+    //HexTile tOut = new HexTile();
+    HexTile nextTile = new HexTile();
+    int toSet = 1;
+    Vector3 o = activeWorld.origin;
+    Vector3 ve = Camera.main.transform.position - o;
+    float camMag = ve.magnitude *.4f;
+    Vector3 lVel = Vector3.zero;
+    float smoothTime = 1;
+    float dist;
+    Vector3 from;
+    Vector3 to;
+    GameObject ant = Instantiate(antGO, onTile.hexagon.center, Quaternion.identity);
+    livingElementals.Add(ant);
+    Transform antTrans = ant.transform;
+    antTrans.position = onTile.hexagon.center; //@TODO: figure out correct scaling
+    
+    //Set up first tile
+    forward = forwardTile.index;
+    if(!onTile.hexagon.isPentagon)
+      {
+        Vector3 fVec = forwardTile.hexagon.center - onTile.hexagon.center; 
+        Vector3 rotationAxis = onTile.hexagon.center - activeWorld.origin;
+        for(int i = 0; i < 5; i++)
+        {
+          Vector3 nextVec = Quaternion.AngleAxis(60*(i+1), rotationAxis) * fVec;
+          float test = 99999;
+          int nextNei = 0;
+          foreach(int nei in onTile.neighbors)
+          {
+            Vector3 v = activeWorld.tiles[nei].hexagon.center - onTile.hexagon.center;
+            float tV = (v - nextVec).sqrMagnitude;
+            if(tV < test)
+            {
+              nextNei = nei;
+              test = tV;
+            }
+          }
+          switch(i)
+          {
+            case 0: right = activeWorld.tiles[nextNei].index; break;
+            case 1: starboard = activeWorld.tiles[nextNei].index; break;
+            case 2: back = activeWorld.tiles[nextNei].index; break;
+            case 3: port = activeWorld.tiles[nextNei].index; break;
+            case 4: left = activeWorld.tiles[nextNei].index; break;
+          }
+        }
+      }
+        else
+        {
+          back = forward;
+          Vector3 backVec = forwardTile.hexagon.center - onTile.hexagon.center; 
+          Vector3 rotationAxis = onTile.hexagon.center - activeWorld.origin;
+          for(int i = 0; i < 4; i++)
+          {
+            Vector3 nextVec = Quaternion.AngleAxis(72*(i+1), rotationAxis) * backVec;
+            float testF = 99999;
+            int nextNei = 0;
+            foreach(int nei in onTile.neighbors)
+            {
+              Vector3 v = activeWorld.tiles[nei].hexagon.center - onTile.hexagon.center;
+              float tV = (v - nextVec).sqrMagnitude;
+              if(tV < testF)
+              {
+                nextNei = nei;
+                testF = tV;
+              }
+            }
+            switch(i)
+            {
+                case 0: port = activeWorld.tiles[nextNei].index; break;
+                case 1: left = activeWorld.tiles[nextNei].index; break;
+                case 2: right = activeWorld.tiles[nextNei].index; break;
+                case 3: starboard = activeWorld.tiles[nextNei].index; break;
+            }
+          }
+        }
+    StartCoroutine(ElementalRandomRotation(ant));
+    while(true)
+    {
+      //Switch to next color
+      foreach(TileType tt in onTile.GetOpposingElements())
+      {
+        if(ele == tt)
+        {
+          GameObject.Destroy(ant);
+          livingElementals.Remove(ant);
+          yield break;
+        }
+      }
+      TileType ts = TileType.Gray;
+      if(onTile.type == ts)
+      {
+        ts = ele;
+      }
+      onTile.ChangeType(ts);
+      
+      //Make next movement based on dna
+      if(onTile.antPasses > dna.Length - 1)
+      {
+        onTile.antPasses = 0;
+      }
+      char seqChar = dna[onTile.antPasses];
+      onTile.antPasses += 1;
+      if(onTile.antPasses > dna.Length - 1)
+      {
+        onTile.antPasses = 0;
+      }
+      switch(seqChar) 
+      {
+        case 'B': nextTile = activeWorld.tiles[back]; break;
+        case 'P': nextTile = activeWorld.tiles[port]; break;
+        case 'L': nextTile = activeWorld.tiles[left]; break;
+        case 'F': nextTile = activeWorld.tiles[forward]; break;
+        case 'R': nextTile = activeWorld.tiles[right]; break;
+        case 'S': nextTile = activeWorld.tiles[starboard]; break;
+        default: Debug.Log("Invalid char" + dna[onTile.antPasses]); break;
+      }
+      if(Mathf.Abs(nextTile.hexagon.scale - onTile.hexagon.scale) > hDiffTolerance || nextTile.passable == false) //height tolerance & passability
+      {
+        nextTile = onTile;
+      }
+      else{
+      if(!nextTile.hexagon.isPentagon)
+      {
+        back = onTile.index;
+        Vector3 backVec = onTile.hexagon.center - nextTile.hexagon.center; 
+        Vector3 rotationAxis = nextTile.hexagon.center - activeWorld.origin;
+        for(int i = 0; i < 5; i++)
+        {
+          Vector3 nextVec = Quaternion.AngleAxis(60*(i+1), rotationAxis) * backVec;
+          float test = 99999;
+          int nextNei = 0;
+          foreach(int nei in nextTile.neighbors)
+          {
+              Vector3 v = activeWorld.tiles[nei].hexagon.center - nextTile.hexagon.center;
+              float tV = (v - nextVec).sqrMagnitude;
+              if(tV < test)
+              {
+                nextNei = nei;
+                test = tV;
+              }
+          }
+          switch(i)
+          {
+            case 0: port = activeWorld.tiles[nextNei].index; break;
+            case 1: left = activeWorld.tiles[nextNei].index; break;
+            case 2: forward = activeWorld.tiles[nextNei].index; break;
+            case 3: right = activeWorld.tiles[nextNei].index; break;
+            case 4: starboard = activeWorld.tiles[nextNei].index; break;
+          }
+        }
+      }
+      else
+      {
+          //Debug.Log("Registered pentagon: " + nextTile.index);
+          back = onTile.index;
+          forward = onTile.index;
+          Vector3 backVec = onTile.hexagon.center - nextTile.hexagon.center; 
+          Vector3 rotationAxis = onTile.hexagon.center - activeWorld.origin;
+          for(int i = 0; i < 4; i++)
+          {
+            Vector3 nextVec = Quaternion.AngleAxis(72*(i+1), rotationAxis) * backVec;
+            float testF = 9999;
+            int nextNei = 0;
+            foreach(int nei in nextTile.neighbors)
+            {
+                Vector3 v = activeWorld.tiles[nei].hexagon.center - nextTile.hexagon.center;
+                float tV = (v - nextVec).sqrMagnitude;
+                if(tV < testF)
+                {
+                  nextNei = nei;
+                  testF = tV;
+                }
+            }
+            switch(i)
+            {
+                case 0: port = activeWorld.tiles[nextNei].index; break;
+                case 1: left = activeWorld.tiles[nextNei].index; break;
+                case 2: right = activeWorld.tiles[nextNei].index; break;
+                case 3: starboard = activeWorld.tiles[nextNei].index; break;
+            }
+          }
+        }
+      }
+      if(onTile != nextTile)
+      {
+        //onTile.passable = true; @TODO: passability of occupied tile
+        //nextTile.passable = false;
+        StartCoroutine(MoveElemental(nextTile.hexagon.center * 1.03f, ant));
+      }
+      onTile = nextTile;
+      //onTile.passable = false;
+      //Debug.DrawLine((onTile.hexagon.center-activeWorld.origin)*1.1f, (nextTile.hexagon.center-activeWorld.origin)*1.1f, Color.blue, 1000.0f, false);
+      if(antSpeed > 0)
+      {
+        yield return new WaitForSeconds(antSpeed);
+      }
+      yield return null;
+    }
+    Debug.Log("Ant stopped");
+    
+    yield return null;
+  }
+  
+  public IEnumerator ElementalRandomRotation(GameObject go)
+  {
+    if(go == null)
+    {yield break;}
+    Vector3 axis = Random.onUnitSphere;
+    float startTime = Time.time;
+    float end = Random.Range(.5f,1.5f);
+    Quaternion g = go.transform.rotation;
+    Quaternion rotation = Random.rotation;
+    while(Time.time < startTime + end)
+    {
+      go.transform.rotation = Quaternion.Lerp(g, rotation, (Time.time - startTime)/end);
+      yield return null;
+    }
+    go.transform.rotation = rotation;
+    if(go == null)
+    {yield break;}
+    StartCoroutine(ElementalRandomRotation(go));
+  }
+  public IEnumerator MoveElemental(Vector3 to, GameObject go)
+  {
+    float startTime = Time.time;
+    Vector3 from = go.transform.position;
+    float t = antSpeed * .24f;
+    while(Time.time < startTime + t)
+    {
+      go.transform.position = Vector3.Lerp(from, to, (Time.time - startTime)/t);
+      yield return null;
+    }
+    go.transform.position = to;
+  }
+
   public string RandomAnt()
   {
     int length = Random.Range(3,7);
@@ -587,47 +855,54 @@ public class WorldManager : MonoBehaviour
       ht.ChangeType(ht.typeToSet);
     }
   }
-  public void GenerationalJoeLife()
+  public int[] CalculateGenerationalJoeLife(List<HexTile> tiles, int generations)
   {
-    foreach(HexTile ht in activeWorld.tiles)
+    int toSet;
+    int numTiles = tiles.Count;
+    int[] state = new int[numTiles];
+    for(int st = 0; st < numTiles; st++)
     {
-      ht.typeToSet = TileType.Gray;
-      TileType nextTile = ht.type;
-      int s = 0;
-      foreach(int i in ht.neighbors)
-      {
-      switch (activeWorld.tiles[i].type)
-      {
-          case TileType.Fire:
-            s += 1;
-            break;
-          case TileType.Water:
-            s += 2;
-            break;
-          default: break;
-      }
-      }
-      if(ht.type == TileType.Gray && s == 4)
-      {
-        ht.typeToSet = TileType.Fire;
-      }
-      if(ht.type == TileType.Fire && s != 0 && s != 5 && s <= 6)
-      {
-        ht.typeToSet = TileType.Water;
-      }
-      if(ht.type == TileType.Water && (s == 1 || s == 2))
-      {
-        ht.typeToSet = TileType.Water;
-      }
-      if(ht.type == TileType.Water && s == 4)
-      {
-        ht.typeToSet = TileType.Fire;
-      }
+      state[st] = tiles[st].generation;
     }
-    foreach(HexTile ht in activeWorld.tiles)
+    for(int i = 0; i < generations; i++)
     {
-      ht.ChangeType(ht.typeToSet);
+      //find the state
+      for(int t = 0; t < numTiles; t++)
+      {
+        toSet = 0; 
+        int s = 0;
+        HexTile ht = tiles[t];
+        foreach(int n in ht.neighbors)
+        {
+          HexTile nei = activeWorld.tiles[n];
+          if((nei.hexagon.scale - ht.hexagon.scale) < hDiffTolerance && nei.type == ht.type)
+          {s += nei.generation;}
+        }
+        if(ht.generation == 0 && s == 4)
+        {
+          toSet = 1;
+        }
+        if(ht.generation == 1 && s != 0 && s != 5 && s <= 6)
+        {
+          toSet = 2;
+        }
+        if(ht.generation == 2 && (s == 1 || s == 2))
+        {
+          toSet = 2;
+        }
+        if(ht.generation == 2 && s == 4)
+        {
+          toSet = 1;
+        }
+        state[t] = toSet;
+      }
+      //set the state
+      for(int x = 0; x > numTiles; x++)
+      {
+        tiles[x].generation = state[x];
+      }  
     }
+    return state;
   }
   public void JoeLife()
   {
@@ -710,6 +985,9 @@ public class WorldManager : MonoBehaviour
 
   public World Initialize(bool loadWorld = false)
   {
+    currentWorldObject = new GameObject("World");
+    currentWorldTrans = currentWorldObject.transform;
+    
     if (loadWorld)
     {
       //random world test
@@ -729,7 +1007,17 @@ public class WorldManager : MonoBehaviour
       Object[] darkBiome = Resources.LoadAll("Dark/");
       Object[] lightBiome = Resources.LoadAll("Light/");
       Object[] misc = Resources.LoadAll("Misc/");
+      Transform p = GameObject.Find("WorldObjects").transform;
 
+      AirElementals = Resources.LoadAll("AirElementals/");//,typeof(GameObject)).Cast<GameObject>().ToArray();
+      EarthElementals = Resources.LoadAll("EarthElementals/");
+      WaterElementals = Resources.LoadAll("WaterElementals/");
+      FireElementals = Resources.LoadAll("FireElementals/");
+      LightElementals = Resources.LoadAll("LightElementals/");
+      DarkElementals = Resources.LoadAll("DarkElementals/");
+      elementals = Resources.LoadAll("wfchars/");
+      livingElementals = new List<GameObject>();
+      
       foreach(HexTile ht in activeWorld.tiles)
       {
         if(ht.objectToPlace != -1)
@@ -741,31 +1029,31 @@ public class WorldManager : MonoBehaviour
         {
           case TileType.Gray:
             g = misc[ht.objectToPlace]; 
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Water: 
             g = waterBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Fire: 
             g = fireBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Earth: 
             g = earthBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Air: 
             g = airBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Dark: 
             g = darkBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           case TileType.Light: 
             g = lightBiome[ht.objectToPlace];
-            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v)); break;
+            Instantiate(g,ht.hexagon.center,Quaternion.FromToRotation(Vector3.up, v), p); break;
             //g.transform.rotation = Quaternion.FromToRotation(g.transform.up, ht.hexagon.center - activeWorld.origin); break;
           default: break;
         }
@@ -775,11 +1063,9 @@ public class WorldManager : MonoBehaviour
     else
     {
       activeWorld = new World();
-      activeWorld.PrepForCache(worldScale, worldSubdivisions);
+      activeWorld.PrepForCache(worldScale, worldSubdivisions); //only being used for base planets right now
     }
 
-    currentWorldObject = new GameObject("World");
-    currentWorldTrans = currentWorldObject.transform;
     worldRenderer = GetComponent<WorldRenderer>();
     //changed this to run TriPlates instead of HexPlates
     foreach (GameObject g in worldRenderer.HexPlates(activeWorld, regularTileSet))
@@ -791,7 +1077,7 @@ public class WorldManager : MonoBehaviour
     {
       ht.ChangeType(ht.type);
     }
-
+    StartCoroutine(SpawnElementals());
     //layermask = 1 << 8;   // Layer 8 is set up as "Chunk" in the Tags & Layers manager
 
     //labelDirections = true;
@@ -800,7 +1086,25 @@ public class WorldManager : MonoBehaviour
 
     return activeWorld;
   }
-
+  public IEnumerator SpawnElementals()
+  {
+    while(activeElementals)
+    {
+      if(livingElementals.Count < maxElementals) 
+      {
+        HexTile t = activeWorld.tiles[Random.Range(0,activeWorld.tiles.Count)];
+        while(t.type == TileType.Gray || t.oceanTile == true || t.passable == false)
+        {
+          t = activeWorld.tiles[Random.Range(0,activeWorld.tiles.Count)];
+        }
+        GameObject g = elementals[Random.Range(0,elementals.Length)] as GameObject;
+        //Instantiate(g, Vector3.zero, Quaternion.identity);
+        StartCoroutine(LangstonsElementals(RandomAnt(), g,t, activeWorld.tiles[t.neighbors[0]]));
+        livingElementals.Add(g);
+      }   
+      yield return new WaitForSeconds(Random.Range(eleSpawnMin, eleSpawnMax));
+    }
+  }
   public IEnumerator TypeChange(RaycastHit hit)
   {
     HexTile hitTile = new HexTile();

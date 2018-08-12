@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class HexPlayerController : MonoBehaviour {
-	Rigidbody rigidbody;
+	Rigidbody rigbody;
 	Transform trans;
 	GameObject player;
 	Transform head;
@@ -34,9 +34,9 @@ public class HexPlayerController : MonoBehaviour {
 		player = this.gameObject;
 		trans = player.transform;
 		//head = GameObject.Find("Head").transform;
-		rigidbody = GetComponent<Rigidbody>();
-		rigidbody.useGravity = false;
-		rigidbody.freezeRotation = true;
+		rigbody = GetComponent<Rigidbody>();
+		rigbody.useGravity = false;
+		rigbody.freezeRotation = true;
 		cam = Camera.main;
 		wM = GameObject.Find("WorldManager").GetComponent<WorldManager>();
 		aW = wM.activeWorld;
@@ -62,18 +62,18 @@ public class HexPlayerController : MonoBehaviour {
 	void FixedUpdate () { 
 		gravityDir = (origin - trans.position).normalized;
 		trans.rotation = Quaternion.FromToRotation(trans.up, -gravityDir) * trans.rotation;
-		rigidbody.AddForce(gravityDir * gravityScale * rigidbody.mass, ForceMode.Acceleration);
+		rigbody.AddForce(gravityDir * gravityScale * rigbody.mass, ForceMode.Acceleration);
 
 		if(Input.GetKey(KeyCode.W))
 		{
 			animator.enabled = true;
 			if(Input.GetKey(KeyCode.LeftShift))
 			{
-				rigidbody.velocity += trans.forward * runSpeed;
+				rigbody.velocity += trans.forward * runSpeed;
 				{animator.Play("Run");}
 			}
 			else{
-				rigidbody.velocity += trans.forward * walkSpeed;
+				rigbody.velocity += trans.forward * walkSpeed;
 				{animator.Play("Walk");}
 			}
 		}
@@ -82,11 +82,11 @@ public class HexPlayerController : MonoBehaviour {
 			animator.enabled = true;
 			if(Input.GetKey(KeyCode.LeftShift))
 			{
-				rigidbody.velocity += -trans.forward * runSpeed;
+				rigbody.velocity += -trans.forward * runSpeed;
 				{animator.Play("Run");}
 			}
 			else{
-				rigidbody.velocity += -trans.forward * walkSpeed;
+				rigbody.velocity += -trans.forward * walkSpeed;
 				{animator.Play("Walk");}
 			}
 		}
@@ -101,7 +101,7 @@ public class HexPlayerController : MonoBehaviour {
 		}
 		if(jumped)
 		{
-			rigidbody.AddForce(-gravityDir * jumpHeight);
+			rigbody.AddForce(-gravityDir * jumpHeight);
 			canJump = false;
 			jumped = false;
 		}
@@ -109,6 +109,7 @@ public class HexPlayerController : MonoBehaviour {
 		{
 			cam.transform.RotateAround(trans.position, gravityDir, -camRotateSpeed*Input.GetAxis("Mouse X"));
 			cam.transform.RotateAround(cam.transform.position, cam.transform.right, -camRotateSpeed*Input.GetAxis("Mouse Y"));
+			cam.transform.RotateAround(trans.position, cam.transform.right, -camRotateSpeed*Input.GetAxis("Mouse Y"));
 		}
 	}                                
 	void OnCollisionStay(Collision collision)
