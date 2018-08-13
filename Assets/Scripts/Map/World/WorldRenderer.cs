@@ -59,11 +59,11 @@ public class WorldRenderer : MonoBehaviour
     if (hexagonal) //Hexagonal uvs
     {
       //Copypasta from worldrenderer
-      float texHeight = 4096f;//tileSet.texture.height;
-      float texWidth = 4096f;//tileSet.texture.width;
-      float root3 = Mathf.Sqrt(3);
-			uvTileWidth = 1.0f / 21.0f; //tileSet.tileWidth / texWidth;
-			uvTileHeight = 1.0f / 21.0f; //tileSet.tileHeight / texHeight;
+      float texHeight = 8192f;//tileSet.texture.height;
+      float texWidth = 8192f;//tileSet.texture.width;
+      //float root3 = Mathf.Sqrt(3);
+			uvTileWidth = 1.0f / 42.0f; //tileSet.tileWidth / texWidth;
+			uvTileHeight = 1.0f / 42.0f; //tileSet.tileHeight / texHeight;
       //float side = uvTileWidth / 2.0f;
      // float radius = Mathf.Sqrt((3.0f * side * side) / 4.0f);
 	  /*

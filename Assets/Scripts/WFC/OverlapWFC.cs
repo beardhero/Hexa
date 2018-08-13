@@ -28,7 +28,7 @@ class OverlapWFC : MonoBehaviour{
 
 	public static bool IsPrefabRef(UnityEngine.Object o){
 		#if UNITY_EDITOR
-		return PrefabUtility.GetPrefabParent(o) == null && PrefabUtility.GetPrefabObject(o) != null;
+		return PrefabUtility.GetCorrespondingObjectFromSource(o) == null && PrefabUtility.GetPrefabObject(o) != null;
 		#endif
 		return true;
 	}

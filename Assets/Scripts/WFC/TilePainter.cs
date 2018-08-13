@@ -189,7 +189,7 @@ public class TilePainter : MonoBehaviour{
 		if (tileobs == null){Restore();}
 		if (this.ValidCoords((int)cursor.x, (int)cursor.y)){
 			if (op == TileLayerEditor.TileOperation.Sampling){
-				UnityEngine.Object s = PrefabUtility.GetPrefabParent(tileobs[(int)cursor.x, (int)cursor.y]);
+				UnityEngine.Object s = PrefabUtility.GetCorrespondingObjectFromSource(tileobs[(int)cursor.x, (int)cursor.y]);
 				if (s != null){
 					color = s;
 					color_rotation = tileobs[(int)cursor.x, (int)cursor.y].transform.localRotation;

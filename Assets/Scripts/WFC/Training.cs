@@ -113,10 +113,10 @@ class Training : MonoBehaviour{
 				  (tilepos.y > -0.55f) && (tilepos.y <= depth*gridsize-0.55f)){
 				UnityEngine.Object fab = tile;
 				#if UNITY_EDITOR
-				fab = PrefabUtility.GetPrefabParent(tile);
+				fab = PrefabUtility.GetCorrespondingObjectFromSource(tile);
 				if (fab == null){
 					PrefabUtility.ReconnectToLastPrefab(tile);
-					fab = PrefabUtility.GetPrefabParent(tile);
+					fab = PrefabUtility.GetCorrespondingObjectFromSource(tile);
 				}
 				if (fab == null){
 					fab = (GameObject)Resources.Load(tile.name);

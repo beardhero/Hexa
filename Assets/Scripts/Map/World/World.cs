@@ -103,7 +103,7 @@ public class World
       {
         seaLevel = tiles[0].hexagon.scale - 1;
       }
-
+      UnityEngine.Random.InitState(seed[i]);
       perlin.Seed = seed[i];
       perlin.Frequency = .0000024;
       perlin.Lacunarity = 2.4;
@@ -124,18 +124,15 @@ public class World
         ht.type = (TileType)t;
         
         double g = perlin.GetValue(ht.hexagon.center.x * genSc, ht.hexagon.center.y * genSc, ht.hexagon.center.z * genSc);
+        
         int gen = (int)g;
         ht.generation += gen;
-        if(ht.generation > 4)
+        ht.generation = (ht.generation % 3) + 2;
+
+        if(10f/tiles.Count > Random.Range(0f,1.0f))
         {
-          ht.generation = 4;
+          ht.generation = Random.Range(5,21);
         }
-        if(ht.generation < 2)
-        {
-          ht.generation = 2;
-        }
-        
-        //ht.generation = Random.Range(2,5); //@TODO
       }
     }
     //biomes and ocean
