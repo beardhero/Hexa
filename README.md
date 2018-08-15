@@ -8,7 +8,7 @@ The main goal of Hex is to create a universe with rich and dynamic prodecural co
 
 ![alt text](https://steemitimages.com/0x0/https://cdn.steemitimages.com/DQmZ7z9Ek9DZkKxtAbM7irMv7ii3aZ7oKBfizk883XUfvA5/elementalatlas.png)
 
-This is a map of the tiles and spell in Hex, soon players will be able to find, create, or purchase from other players, spells based on combinations of these symbols that have various effects.  Each generation of spells will introduce 256 new effects available to find and use.
+This is a map of the tiles and spells in Hex. Soon players will be able to find, create, or purchase from other players, spells based on combinations of these symbols that have various effects.  Each generation of spells will introduce 256 new effects available to find and use.
 
 Hex incorporates a full ecosystem of Ethereum tokens.  Hex, an erc-20 token, is the base currency in the universe.  Hex will be minted with a finite supply in each universe.  New universes mint new Hex to be found in each world, and represent new seasons in the competitive timeline. 
 
