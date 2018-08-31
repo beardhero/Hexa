@@ -526,7 +526,6 @@ public class WorldManager : MonoBehaviour
     int back, forward, right, left, port, starboard;
     back = forward = right = left = port = starboard = 0;
     TileType ele = onTile.type;
-    Debug.Log((int)ele);
     char[] dna = seq.ToCharArray();
     //HexTile tOut = new HexTile();
     HexTile nextTile = new HexTile();
@@ -605,7 +604,7 @@ public class WorldManager : MonoBehaviour
           }
         }
     StartCoroutine(ElementalRandomRotation(ant));
-    while(true)
+    while(ant != null)
     {
       //Switch to next color
       foreach(TileType tt in onTile.GetOpposingElements())
@@ -753,6 +752,8 @@ public class WorldManager : MonoBehaviour
   }
   public IEnumerator MoveElemental(Vector3 to, GameObject go)
   {
+    if(go==null)
+    {yield break;}
     float startTime = Time.time;
     Vector3 from = go.transform.position;
     float t = antSpeed * .24f;
@@ -987,7 +988,10 @@ public class WorldManager : MonoBehaviour
   {
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
-    
+    if(!loadWorld) //loading a card
+    {
+
+    }
     if (loadWorld)
     {
       //random world test
@@ -1078,6 +1082,12 @@ public class WorldManager : MonoBehaviour
       ht.ChangeType(ht.type);
     }
     StartCoroutine(SpawnElementals());
+    /* 
+    foreach(HexTile ht in activeWorld.tiles)
+    {
+      ht.ChangeType(TileType.Sol);
+    }
+    */
     //layermask = 1 << 8;   // Layer 8 is set up as "Chunk" in the Tags & Layers manager
 
     //labelDirections = true;

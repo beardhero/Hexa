@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 2f85049ad55e4b8459adf1345298b8b4
+timeCreated: 1525798982
+licenseType: Store
+ShaderImporter:
+  defaultTextures:
+  - _EyeTexture: {fileID: 2800000, guid: 20f2ef1b6e86e8d4e8e6a93afff05f74, type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

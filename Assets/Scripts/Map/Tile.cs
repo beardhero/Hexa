@@ -8,7 +8,7 @@ public enum TileType {
   None, Gray, 
   Water, Fire, Earth, Air, Dark, Light,
   Metal, Ice, Vapor, Crystal, Arbor, Astral, 
-  Luna, Sol
+  Luna, Sol, Void, Divine
 };
 
 [Serializable]
@@ -26,6 +26,7 @@ public class Tile
   public Tile(float startingHeight)
   {
     height = startingHeight;
+    type = TileType.Water;
   }
   
   public Tile(float x, float y, int width, float lacunarity, float probability, float height_in = -1)

@@ -8,6 +8,7 @@
 
 using UnityEngine;
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
@@ -28,8 +29,27 @@ public class ZoneManager : MonoBehaviour
   public void Initialize (Zone z)
   {
     //layermask = 1<<8;   // Layer 8 is set up as "Chunk" in the Tags & Layers manager
+    //GameManager.zoneRenderer.RenderZone(z, regularTileSet);
+    CapturePNG();
   }
+  public void CapturePNG()
+  {
+    GameObject selection = GameObject.Find ("Zone Prefab(Clone)");
+    Camera cam = Camera.main;
+        int width = 128;
+        int height = 128;
+        Texture2D tex = new Texture2D (width, height, TextureFormat.RGB24, false);
+        Rect sel = new Rect ();
+        sel.width = width;
+        sel.height = height;
+        sel.x = 1.618f;
+        sel.y = 1.1265f;//selection.transform.position.y;
 
+        tex.ReadPixels (sel, 0, 0);
+ 
+        byte[] bytes = tex.EncodeToPNG ();
+        File.WriteAllBytes ("Assets/Test/picture.png", bytes);
+  }
   public void OnTapInput(Vector2 tap)
   {
     

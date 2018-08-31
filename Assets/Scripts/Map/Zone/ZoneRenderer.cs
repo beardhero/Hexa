@@ -2,15 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ZoneRenderer : MonoBehaviour
+public class ZoneRenderer : MonoBehaviour  //turning this into card renderer
 {
   public GameObject boardPrefab;
-  public Transform waterTrans;
+  //public Transform waterTrans;
 
 	public List<GameObject> RenderZone(Zone zone, TileSet tileSet)
   {
     // Set water
-    waterTrans.position = new Vector3(waterTrans.position.x, zone.waterHeight, waterTrans.position.z);
+    //waterTrans.position = new Vector3(waterTrans.position.x, zone.waterHeight, waterTrans.position.z);
 
     List<GameObject> output = new List<GameObject>();
 
@@ -63,11 +63,11 @@ public class ZoneRenderer : MonoBehaviour
         float texHeight = tileSet.texture.height;
         float texWidth = tileSet.texture.width;
         //float root3 = Mathf.Sqrt(3);
-        float uvTileWidth = tileSet.tileWidth/texWidth;
-        float uvTileHeight = tileSet.tileWidth/texHeight;
+        float uvTileWidth = 1f/42f;//tileSet.tileWidth/texWidth;
+        float uvTileHeight = 1f/42f;//tileSet.tileWidth/texHeight;
         float side = uvTileWidth/2;
         float radius = Mathf.Sqrt((3*side*side)/4);
-
+        /* OLD UVS
         Vector2 uv0 = new Vector2(side,side),
                 uv1 = new Vector2(side, side+side),
                 uv2 = new Vector2(side+radius, side+side/2),
@@ -75,7 +75,14 @@ public class ZoneRenderer : MonoBehaviour
                 uv4 = new Vector2(side, 0),
                 uv5 = new Vector2(side-radius, side/2),
                 uv6 = new Vector2(side-radius, side+side/2);
-
+        */
+        Vector2 uv0 = new Vector2 (uvTileWidth/2.0f, uvTileHeight / 2.0f),
+			  uv1 = new Vector2 (10/texWidth, 98/texHeight),
+			  uv2 = new Vector2 (54/texWidth, 22/texHeight),
+		  	uv3 = new Vector2 (141/texWidth, 22/texHeight),
+			  uv4 = new Vector2 (185/texWidth, 98/texHeight),
+			  uv5 = new Vector2 (141/texWidth, 173/texHeight),
+			  uv6 = new Vector2 (54/texWidth, 173/texHeight);
         int counter = 0;
         for (int x=0; x<zone.width && x<tileSection.GetLength(0); x++)
         {

@@ -1,15 +1,9 @@
-/*
- * Copyright (c) 2015 Colin James Currie.
- * All rights reserved.
- * Contact: cj@cjcurrie.net
- */
-
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
-
+using System.IO;
 public enum RelativityState {None, Caching, MainMenu, WorldMap, ZoneMap, WorldDuel};
 
 public class GameManager : MonoBehaviour
@@ -25,7 +19,7 @@ public class GameManager : MonoBehaviour
   public static Camera cam;
   public static MainUI mainUI;
 
-  //For World/Zone
+  //For World
   public static World currentWorld;
   public static GameObject worldManagerObj;
   public static WorldManager worldManager;
@@ -34,11 +28,23 @@ public class GameManager : MonoBehaviour
   public static List<GameObject> currentZoneObjects;
   public static ZoneViewCamera zoneCameraControls;
 
+  //Zone
+  public static ZoneManager zoneManager;
+  public static ZoneRenderer zoneRenderer;
+  public static Zone currentZone;
+
   // For combat
   public static GameObject combatManagerObj;
   public static CombatManager combatManager;
   public static RoundManager roundManager;
   
+  void Update()
+  {
+    if(Input.GetKeyDown(KeyCode.Return))
+    {
+      CapturePNG();
+    }
+  }
   // *** Main Initializer ***
   void Awake ()
   {
@@ -70,7 +76,7 @@ public class GameManager : MonoBehaviour
       break;
 
       case RelativityState.ZoneMap:
-//        InitializeZone();
+        InitializeZone();
       break;
 
       case RelativityState.Caching:
@@ -100,7 +106,7 @@ public class GameManager : MonoBehaviour
     combatManager = combatManagerObj.GetComponent<CombatManager>();
     combatManager.Initialize(currentWorld);
   }
-	/*
+	
   void InitializeZone()
   {
     zoneManager = GameObject.FindWithTag("Zone Manager").GetComponent<ZoneManager>();
@@ -118,7 +124,7 @@ public class GameManager : MonoBehaviour
     }
     int safety = 100;
     bool buildingZone = true;
-    int minimumSize = 1750;
+    int minimumSize = 50;
 
     Triangle tri = new Triangle(new Vector3(0, 0, 0), new Vector3(18, 0, 24), new Vector3(0, 0, 36));
 
@@ -146,10 +152,44 @@ public class GameManager : MonoBehaviour
     }
 
     currentZoneObjects = zoneRenderer.RenderZone(currentZone, zoneManager.regularTileSet);
-    zoneManager.Initialize(currentZone);
-
+    //zoneManager.Initialize(currentZone);
+    //CapturePNG();
   }
-*/
+
+  public void CapturePNG()
+  {
+    RenderTexture.active = Camera.main.targetTexture;
+    
+    //GameObject selection = GameObject.Find ("Zone Prefab(Clone)");
+        Camera.main.backgroundColor = Color.clear;
+        int width = 1024;
+        int height = 1024;
+        Texture2D tex = new Texture2D (width, height, TextureFormat.ARGB32, false);
+        Rect sel = new Rect ();
+        sel.width = width;
+        sel.height = height;
+        //sel.position = new Vector2(0,0);
+
+        tex.ReadPixels (sel, 0, 0);
+        /* 
+        for(int x = 0; x < tex.width; x++)
+        {
+          for(int y = 0; y < tex.height; y++)
+          {
+            if(tex.GetPixel(x,y) == Color.clear)
+            {
+              
+            }
+          }
+        }
+        */
+        byte[] bytes = tex.EncodeToPNG ();
+
+
+
+        File.WriteAllBytes ("Assets/Cards/card.png", bytes);
+  }
+
   void OnGUI()
   {
     //mainUI.OnMainGUI(); TURN BACK ON LATER

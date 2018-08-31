@@ -18,6 +18,7 @@ public class World
   public Season season;
   public AxisTilt tilt;
   public TileType element;
+  public float glyphProb = 0.01f; //distribution of glyphs
 
   [HideInInspector] public SerializableVector3 origin;
   [HideInInspector] public int circumferenceInTiles;
@@ -90,85 +91,151 @@ public class World
     Object[] misc = Resources.LoadAll("Misc/");
 
     Perlin perlin = new Perlin();
-    float sc = 99.0f;
-    float objSc = 240f;
-    float genSc = 99999f;
-    double tiers = 42;
+    float sc = 99.0124f; //99.0f
+    float objSc = 4204f;
+    float genSc = .124f;
+    double tiers = 42; //42
     int h = 0;
-
+    float seaLevel = tiles[0].hexagon.scale - 1;
+    float maxHeight = tiles[0].hexagon.scale + 24;
+    float minHeight = seaLevel - 6;
+    
     for(int i = 0; i < seed.Length; i++)
     {
-      //heights
-      if(i == 0)
-      {
-        seaLevel = tiles[0].hexagon.scale - 1;
-      }
+      
+      //Heightmap
       UnityEngine.Random.InitState(seed[i]);
+      int typeShift = Random.Range(0,13);
       perlin.Seed = seed[i];
-      perlin.Frequency = .0000024;
-      perlin.Lacunarity = 2.4;
-      perlin.Persistence = .24;
-      perlin.OctaveCount = 6;
+
+      perlin.Frequency = .0000024;//.01618;// * Random.Range(0.5f,1.5f);// * i; //.0000024
+      perlin.Lacunarity = 1.24;// * Random.Range(0.5f,1.5f);//2.4;
+      perlin.Persistence = .24;// * Random.Range(0.5f,1.5f); //.24
+      perlin.OctaveCount = 6;// + i;
+      if(i > 24)
+      {
+        sc = 124f;
+        perlin.Frequency = .000001618;// * Random.Range(0.5f,1.5f);// * i; //.0000024
+        perlin.Lacunarity = 2.24;// * Random.Range(0.5f,1.5f);//2.4;
+        perlin.Persistence = .24;// * Random.Range(0.5f,1.5f); //.24
+        perlin.OctaveCount = 3;// + i;
+      }
       
       //float s = Random.Range(-99999, 99999);
       foreach (HexTile ht in tiles)
       {
         double perlinVal = perlin.GetValue(ht.hexagon.center.x * sc, ht.hexagon.center.y * sc, ht.hexagon.center.z * sc);
-        double v1 = tiers * perlinVal;
+        double v1 = perlinVal*tiers;//*i; 
         h = (int)v1;
         //Debug.Log(v1);
         ht.hexagon.scale += h;
-        int v = ((int)ht.type + h);
-        int t = v % 7;
-        t++;
+
+        int v = Mathf.Abs((int)ht.type + h + typeShift);
+        int t = (v % 11) + 2; //using 12 types
+        //Debug.Log(t);
+        //t++;
         ht.type = (TileType)t;
-        
+
+        if(ht.hexagon.scale > maxHeight)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
+        if(ht.hexagon.scale < minHeight || ht.hexagon.scale < 1)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
         double g = perlin.GetValue(ht.hexagon.center.x * genSc, ht.hexagon.center.y * genSc, ht.hexagon.center.z * genSc);
-        
+       
         int gen = (int)g;
         ht.generation += gen;
-        ht.generation = (ht.generation % 3) + 2;
+        ht.generation = Mathf.Abs((ht.generation % 3)) + 2;
 
-        if(10f/tiles.Count > Random.Range(0f,1.0f))
+        if(i == 31 && 100f/tiles.Count > Random.Range(0f,1.0f))
         {
           ht.generation = Random.Range(5,21);
-        }
+        } 
       }
     }
+    
+    
+    
     //biomes and ocean
   
     int water = 0; 
     int fire = 0;
+    int vapor = 0;
+    int crystal = 0;
+
+    seaLevel = AverageTileHeight() + 0.1f;
+    //water world
     foreach(HexTile ht in tiles)
     {
       if(ht.type == TileType.Water){water++;}
       if(ht.type == TileType.Fire){fire++;}
+      if(ht.type == TileType.Vapor){vapor++;}
+      if(ht.type == TileType.Crystal){crystal++;}
     }
-    if(water >= fire)
+
+    if(water >= fire && water >= vapor && water >= crystal)
     {
       element = TileType.Water;
       foreach(HexTile ht in tiles)
       {
+        /* 
         if(ht.type == TileType.Water || ht.type == TileType.Fire)
         {
           ht.hexagon.scale = seaLevel;
         }
-        if(ht.type == TileType.Light){ht.type = TileType.Dark;};
+        */
       }
+      LightToDark();
     }
-    else
+    //fire world
+    if(fire > water && fire > vapor && fire > crystal)
     {
       element = TileType.Fire;
       foreach(HexTile ht in tiles)
       {
+        /* 
         if(ht.type == TileType.Water || ht.type == TileType.Fire)
         {
           ht.hexagon.scale = seaLevel;
         }
-        if(ht.type == TileType.Dark){ht.type = TileType.Light;};
+        */
       }
+      DarkToLight();
     }
-    //for placing objects
+    //vapor
+    if(vapor >= water && vapor >= fire && vapor >= crystal)
+    {
+      element = TileType.Vapor;
+      foreach(HexTile ht in tiles)
+      {
+        /* 
+        if(ht.type == TileType.Vapor || ht.type == TileType.Crystal)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
+        */
+      }
+      DarkToLight();
+    }
+    //crystal
+    if(crystal > fire && crystal > vapor && crystal > water)
+    {
+      element = TileType.Crystal;
+      foreach(HexTile ht in tiles)
+      {
+        /* 
+        if(ht.type == TileType.Vapor || ht.type == TileType.Crystal)
+        {
+          ht.hexagon.scale = seaLevel;
+        }
+        */
+      }
+      LightToDark();
+    }
+
     foreach(HexTile ht in tiles)
     {
       if(ht.hexagon.scale <= seaLevel)
@@ -179,12 +246,13 @@ public class World
         ht.hexagon.scale = seaLevel;
       }
     }
+
     //biome objects
     foreach(HexTile ht in tiles)
     {
       double v2 =  Mathf.Abs((float)perlin.GetValue(ht.hexagon.center.x * objSc, ht.hexagon.center.y * objSc, ht.hexagon.center.z * objSc));
-      double v3 = Random.Range(0.0f,1.0f);
-      if(v3 < v2)
+      double v3 = .01618;//Random.Range(0.0f,1.0f);
+      if(v3 > v2 && !ht.oceanTile)
       {
         ht.passable = false;
         switch(ht.type)
@@ -237,6 +305,17 @@ public class World
   }
 */
 
+  public float AverageTileHeight()
+  {
+    float h = 0;
+    foreach(HexTile ht in tiles)
+    {
+      h += ht.hexagon.scale;
+    }
+    h /= tiles.Count;
+    return h;
+  }
+
   public void PrepForCache(float scale, int subdivisions)
   {
     if (tiles == null || tiles.Count == 0)
@@ -260,4 +339,32 @@ public class World
     tiles = new List<HexTile>(s.hexTiles);
     neighborInit = false;
   }
+
+  public void LightToDark()
+    {
+      foreach(HexTile ht in tiles)
+      {
+        if(ht.type == TileType.Light){ht.type = TileType.Dark;}
+        if(ht.type == TileType.Metal){ht.type = TileType.Ice;}
+        if(ht.type == TileType.Fire){ht.type = TileType.Water;}
+        if(ht.type == TileType.Astral){ht.type = TileType.Arbor;}
+        if(ht.type == TileType.Air){ht.type = TileType.Earth;}
+        if(ht.type == TileType.Crystal){ht.type = TileType.Vapor;}
+        if(ht.type == TileType.Sol){ht.type = TileType.Luna;}
+      }
+    }
+    public void DarkToLight()
+    {
+      foreach(HexTile ht in tiles)
+      {
+        if(ht.type == TileType.Dark){ht.type = TileType.Light;}
+        if(ht.type == TileType.Ice){ht.type = TileType.Metal;}
+        if(ht.type == TileType.Water){ht.type = TileType.Fire;}
+        if(ht.type == TileType.Arbor){ht.type = TileType.Astral;}
+        if(ht.type == TileType.Earth){ht.type = TileType.Air;}
+        if(ht.type == TileType.Vapor){ht.type = TileType.Crystal;}
+        if(ht.type == TileType.Luna){ht.type = TileType.Sol;}
+      }
+    }
+
 }
